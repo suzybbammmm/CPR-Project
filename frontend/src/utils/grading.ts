@@ -1,0 +1,24 @@
+import { Grade } from '../types/game.types';
+
+export function calculateGrade(score: number): Grade {
+  if (score >= 10000) return 'S';
+  if (score >= 7000) return 'A';
+  if (score >= 5000) return 'B';
+  if (score >= 3000) return 'C';
+  return 'D';
+}
+
+export function getGradeColor(grade: Grade): string {
+  switch (grade) {
+    case 'S':
+      return '#FBBF24'; // neon-yellow
+    case 'A':
+      return '#00FF88'; // neon-green
+    case 'B':
+      return '#00D4FF'; // neon-blue
+    case 'C':
+      return '#FF6B35'; // neon-orange
+    case 'D':
+      return '#FF4444'; // red
+  }
+}
