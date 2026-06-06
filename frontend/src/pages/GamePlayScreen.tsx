@@ -42,23 +42,37 @@ function getBpmLabel(bpm: number): string {
 export function GamePlayScreen() {
   const { savePlayerResult, currentPlayerIndex, playerCount, setScreen } = useGameContext();
   const { data, isConnected } = useGameData();
-  const { seconds, isFinished, start, formatTime } = useCountdown(120);
+  const { seconds, isFinished, start, formatTime } = useCountdown(30); // TODO: 테스트용 30초, 원래는 120초
 
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
-  const [dataHistory, setDataHistory] = useState<DataPoint[]>([]);
+  const [dataHistory, setDataHistory] = useState<DataPoint[]>([]); // For graph visualization
+  const [compressionPeaks, setCompressionPeaks] = useState<DataPoint[]>([]); // For proper % calculation
   const [isPressed, setIsPressed] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState(FEEDBACK_MESSAGES[0]);
   const [feedbackKey, setFeedbackKey] = useState(0);
   const [smoothedDepth, setSmoothedDepth] = useState(5.4);
+  const [peakDepth, setPeakDepth] = useState(5.4);
 
   // Use ref to store latest data
   const dataRef = useRef(data);
   const smoothedDepthRef = useRef(5.4);
+  const peakDepthRef = useRef(5.4);
+  const peakTimeRef = useRef(Date.now());
 
   // Moving average filter for depth (last 5 readings)
   const depthHistoryRef = useRef<number[]>([]);
+
+  // Compression peak detection
+  const compressionPeakRef = useRef(0);
+  const isCompressingRef = useRef(false);
+  const lastRawDepthRef = useRef(0);
+
+  // Use refs for combo and maxCombo to avoid dependency issues
+  const comboRef = useRef(0);
+  const maxComboRef = useRef(0);
+  const compressionPeaksRef = useRef<DataPoint[]>([]);
 
   // Update ref when data changes
   useEffect(() => {
@@ -66,7 +80,12 @@ export function GamePlayScreen() {
 
     // Update smoothed depth for display
     if (data) {
-      depthHistoryRef.current.push(data.depth);
+      const currentDepth = data.depth;
+      const currentBpm = data.bpm;
+      const now = Date.now();
+
+      // Update moving average
+      depthHistoryRef.current.push(currentDepth);
 
       // Keep only last 5 readings
       if (depthHistoryRef.current.length > 5) {
@@ -78,11 +97,99 @@ export function GamePlayScreen() {
       const smoothed = sum / depthHistoryRef.current.length;
       setSmoothedDepth(smoothed);
       smoothedDepthRef.current = smoothed;
+
+      // Peak hold logic: update peak if current depth is higher
+      if (currentDepth > peakDepthRef.current) {
+        peakDepthRef.current = currentDepth;
+        peakTimeRef.current = now;
+        setPeakDepth(currentDepth);
+      } else {
+        // Decay peak after 300ms
+        const timeSincePeak = now - peakTimeRef.current;
+        if (timeSincePeak > 300) {
+          // Gradually decay peak towards current depth
+          const decayRate = 0.15; // 15% decay per update
+          const newPeak = Math.max(
+            currentDepth,
+            peakDepthRef.current - (peakDepthRef.current - currentDepth) * decayRate
+          );
+          peakDepthRef.current = newPeak;
+          setPeakDepth(newPeak);
+        }
+      }
+
+      // Compression peak detection for data sampling
+      // Use absolute depth thresholds instead of relative changes
+      const COMPRESSION_START_THRESHOLD = 3; // 3cm 이상 = 압박 중
+      const RELEASE_THRESHOLD = 1.5; // 1.5cm 미만 = 이완됨
+      const MIN_PEAK_DEPTH = 3; // 최소 3cm 이상 눌러야 유효한 압박
+
+      if (currentDepth >= COMPRESSION_START_THRESHOLD) {
+        // Deep enough to be considered a compression
+        if (!isCompressingRef.current) {
+          // Start of new compression
+          isCompressingRef.current = true;
+          compressionPeakRef.current = currentDepth;
+        } else {
+          // Update peak during compression
+          compressionPeakRef.current = Math.max(compressionPeakRef.current, currentDepth);
+        }
+      } else if (currentDepth < RELEASE_THRESHOLD && isCompressingRef.current) {
+        // Released after compression -> record the peak
+        if (compressionPeakRef.current >= MIN_PEAK_DEPTH) {
+          const peakDepthValue = compressionPeakRef.current;
+
+          console.log('🎯 압박 피크 감지:', {
+            피크깊이: peakDepthValue.toFixed(2),
+            BPM: currentBpm,
+            시간: new Date().toLocaleTimeString()
+          });
+
+          // Store compression peak for proper % calculation
+          const newPeak = {
+            time: `${compressionPeaksRef.current.length}`,
+            depth: peakDepthValue,
+            bpm: currentBpm,
+            timestamp: now
+          };
+          compressionPeaksRef.current = [...compressionPeaksRef.current, newPeak];
+          setCompressionPeaks(prev => [...prev, newPeak]);
+
+          // Calculate points based on peak (outside setState) using ref
+          const { points, newCombo } = calculatePoints(
+            peakDepthValue,
+            currentBpm,
+            comboRef.current
+          );
+
+          // Update combo (both state and ref)
+          comboRef.current = newCombo;
+          setCombo(newCombo);
+
+          // Update score if points earned
+          if (points > 0) {
+            setScore(prev => prev + points);
+          }
+
+          // Update max combo (both state and ref)
+          if (newCombo > maxComboRef.current) {
+            maxComboRef.current = newCombo;
+            setMaxCombo(newCombo);
+          }
+        }
+
+        // Reset for next compression
+        isCompressingRef.current = false;
+        compressionPeakRef.current = 0;
+      }
+
+      lastRawDepthRef.current = currentDepth;
     }
   }, [data]);
 
   // Get depth and bpm from data or use defaults
-  const depth = smoothedDepth;
+  // Use weighted average: 70% peak + 30% smoothed for faster response to peak compression
+  const depth = peakDepth * 0.7 + smoothedDepth * 0.3;
   const bpm = data?.bpm ?? 108;
   // Start countdown timer on mount
   useEffect(() => {
@@ -95,7 +202,18 @@ export function GamePlayScreen() {
     setCombo(0);
     setMaxCombo(0);
     setDataHistory([]);
+    setCompressionPeaks([]);
     setFeedbackKey(0);
+
+    // Reset compression peak detection
+    compressionPeakRef.current = 0;
+    isCompressingRef.current = false;
+    lastRawDepthRef.current = 0;
+
+    // Reset combo refs
+    comboRef.current = 0;
+    maxComboRef.current = 0;
+    compressionPeaksRef.current = [];
   }, [currentPlayerIndex]);
 
   // Handle isPressed state based on actual compression depth
@@ -138,62 +256,25 @@ export function GamePlayScreen() {
     };
   }, [data]);
 
-  // Scoring logic - sample data at regular intervals
+  // Real-time data sampling for graph visualization (continuous wave form)
   useEffect(() => {
     const interval = setInterval(() => {
       const currentData = dataRef.current;
       if (!currentData) return;
 
-      // Use smoothed depth and current bpm
-      const rawDepth = currentData.depth;
-      const currentDepth = smoothedDepthRef.current; // Use the smoothed value from ref
-      const currentBpm = currentData.bpm;
-
-      console.log('📊 데이터 샘플링:', {
-        원본깊이: rawDepth.toFixed(2),
-        스무딩깊이: currentDepth.toFixed(2),
-        bpm: currentBpm
-      });
-
-      // Calculate points and combo using smoothed depth
-      setCombo(prevCombo => {
-        const { points, newCombo } = calculatePoints(currentDepth, currentBpm, prevCombo);
-        console.log('🎯 콤보 계산:', {
-          원본깊이: rawDepth.toFixed(2),
-          스무딩깊이: currentDepth.toFixed(2),
-          bpm: currentBpm,
-          prevCombo,
-          newCombo,
-          points,
-          isProper: currentDepth >= 5 && currentDepth <= 6 && currentBpm >= 100 && currentBpm <= 120
-        });
-
-        // Update score
-        if (points > 0) {
-          setScore(prev => {
-            const newScore = prev + points;
-            console.log('💰 점수 업데이트:', prev, '+', points, '=', newScore);
-            return newScore;
-          });
-        }
-
-        // Update max combo
-        setMaxCombo(prev => Math.max(prev, newCombo));
-
-        return newCombo;
-      });
-
-      // Track data history for charts (use smoothed depth)
+      // Sample current depth and BPM every 200ms for graph
       setDataHistory(prev => [...prev, {
-        time: `${prev.length}s`,
-        depth: currentDepth,
-        bpm: currentBpm,
+        time: `${(prev.length * 0.2).toFixed(1)}s`,
+        depth: currentData.depth,
+        bpm: currentData.bpm,
         timestamp: Date.now()
       }]);
-    }, 500); // Sample every 500ms (2 times per second)
+    }, 200); // Sample every 200ms for smooth wave visualization
 
     return () => clearInterval(interval);
   }, []); // Only create interval once on mount
+
+  // Note: Scoring logic happens in real-time based on compression peaks (not interval)
 
   // Rotate feedback messages
   useEffect(() => {
@@ -209,10 +290,22 @@ export function GamePlayScreen() {
   // Handle game finish (manual or timer)
   const handleFinish = useCallback(() => {
     console.log('🏁 게임 종료! 데이터 분석 시작...');
-    console.log('📊 수집된 데이터 개수:', dataHistory.length);
+    console.log('📊 수집된 그래프 데이터 개수:', dataHistory.length);
+    console.log('🎯 압박 피크 개수 (ref):', compressionPeaksRef.current.length);
+    console.log('🎯 압박 피크 데이터 (ref):', compressionPeaksRef.current);
 
-    const { avgDepth, avgBpm } = calculateAverages(dataHistory);
-    const properPercent = calculateProperPercent(dataHistory);
+    // Use different data for different calculations:
+    // - Proper %: Use peaks (more accurate for counting good compressions)
+    // - Average depth/bpm: Use all compression samples (more representative)
+
+    const peaksForProper = compressionPeaksRef.current.length > 0
+      ? compressionPeaksRef.current
+      : dataHistory.filter(d => d.depth >= 3);
+
+    const samplesForAverage = dataHistory.filter(d => d.depth >= 3);
+
+    const { avgDepth, avgBpm } = calculateAverages(samplesForAverage);
+    const properPercent = calculateProperPercent(peaksForProper);
     const grade = calculateGrade(score);
 
     console.log('📈 분석 결과:', {
@@ -222,7 +315,9 @@ export function GamePlayScreen() {
       avgDepth,
       avgBpm,
       maxCombo,
-      dataCount: dataHistory.length
+      graphDataCount: dataHistory.length,
+      compressionSamplesCount: samplesForAverage.length,
+      peakCount: peaksForProper.length
     });
 
     const result = {
@@ -233,7 +328,7 @@ export function GamePlayScreen() {
       avgDepth,
       avgBpm,
       maxCombo,
-      dataHistory
+      dataHistory // Keep graph data for visualization
     };
 
     savePlayerResult(result);
@@ -258,19 +353,21 @@ export function GamePlayScreen() {
   return (
     <div className="relative w-full h-screen min-h-screen overflow-hidden flex flex-col font-body">
       {/* ===== ROTATION GUIDE BANNER ===== */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="relative z-20 flex justify-center pt-4"
-      >
-        <div className="glass-card rounded-full px-6 py-2 flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-neon-blue animate-pulse" />
-          <p className="text-sm font-body text-white/70 tracking-wide">
-            <span className="text-neon-blue font-semibold">가이드라인:</span> CPR은 2분마다 교대하는 것을 권장합니다
-          </p>
-        </div>
-      </motion.div>
+      {playerCount > 1 && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="relative z-20 flex justify-center pt-4"
+        >
+          <div className="glass-card rounded-full px-6 py-2 flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-neon-blue animate-pulse" />
+            <p className="text-sm font-body text-white/70 tracking-wide">
+              <span className="text-neon-blue font-semibold">가이드라인:</span> CPR은 2분마다 교대하는 것을 권장합니다
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* ===== TOP BAR ===== */}
       <div className="relative z-20 flex items-center justify-between px-8 py-5">
@@ -299,7 +396,7 @@ export function GamePlayScreen() {
               <p className="text-xs font-body text-white/50 uppercase tracking-widest">
                 남은 시간
               </p>
-              {seconds <= 15 && seconds > 0 && (
+              {seconds <= 15 && seconds > 0 && playerCount > 1 && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -312,17 +409,17 @@ export function GamePlayScreen() {
             </div>
             <p
               className={`text-2xl font-heading ${
-                seconds <= 15 && seconds > 0 ? 'text-neon-orange' : 'text-white/80'
+                seconds <= 15 && seconds > 0 && playerCount > 1 ? 'text-neon-orange' : 'text-white/80'
               }`}
               style={
-                seconds <= 15 && seconds > 0
+                seconds <= 15 && seconds > 0 && playerCount > 1
                   ? { textShadow: '0 0 10px rgba(255, 107, 53, 0.5)' }
                   : undefined
               }
             >
               {formatTime}
             </p>
-            {seconds <= 15 && seconds > 0 && (
+            {seconds <= 15 && seconds > 0 && playerCount > 1 && (
               <motion.p
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -426,7 +523,7 @@ export function GamePlayScreen() {
                 height: `${depthPercent}%`
               }}
               transition={{
-                duration: 0.4,
+                duration: 0.15,
                 ease: 'easeOut'
               }}
               style={{
@@ -598,7 +695,7 @@ export function GamePlayScreen() {
                 height: `${Math.min(bpm / 180 * 100, 100)}%`
               }}
               transition={{
-                duration: 0.5,
+                duration: 0.3,
                 ease: 'easeOut'
               }}
               style={{
@@ -643,7 +740,7 @@ export function GamePlayScreen() {
         {/* Feedback message */}
         <div className="flex-1 flex justify-center">
           <AnimatePresence mode="wait">
-            {seconds <= 10 && seconds > 0 ? (
+            {seconds <= 10 && seconds > 0 && playerCount > 1 ? (
               <motion.div
                 key="rotation-warning"
                 initial={{
