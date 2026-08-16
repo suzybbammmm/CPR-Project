@@ -77,7 +77,7 @@ export function LivePracticeMonitor(props: LivePracticeMonitorProps) {
       : 'border-amber-400/50 bg-amber-400/10 text-amber-100';
 
   return (
-    <main className="min-h-screen bg-[#07111f] px-6 py-6 text-white lg:px-10">
+    <main className="relative z-20 min-h-screen bg-[#07111f] px-6 py-6 text-white lg:px-10">
       <div className="mx-auto max-w-[1680px]">
         <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-slate-700 pb-5">
           <div><p className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-cyan-300"><HeartPulseIcon className="h-5 w-5" />LifePulse</p><h1 className="mt-1 text-3xl font-black">실시간 CPR 실습 모니터</h1><p className="mt-1 text-base text-slate-400">{props.playerLabel} · {props.victimLabel} · {props.handPlacement}</p></div>
