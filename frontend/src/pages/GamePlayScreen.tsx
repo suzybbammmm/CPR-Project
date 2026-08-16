@@ -352,30 +352,30 @@ export function GamePlayScreen() {
       )}
 
       {/* ===== TOP BAR ===== */}
-      <div className="relative z-20 flex items-center justify-between px-8 py-5">
+      <div className="relative z-20 flex items-center justify-between px-10 py-6">
         {/* Score */}
         <div className="flex items-center gap-4">
-          <div className="glass-card rounded-2xl px-8 py-4 flex items-center gap-4">
+          <div className="glass-card min-w-[250px] rounded-3xl px-9 py-6 flex items-center gap-5">
             <ZapIcon
-              className="w-7 h-7 text-neon-yellow"
+              className="w-10 h-10 text-neon-yellow"
               style={{
                 filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.6))'
               }} />
             
             <div>
-              <p className="text-xs font-body text-white/50 uppercase tracking-widest">
+              <p className="text-sm font-body text-white/50 uppercase tracking-widest">
                 현재 점수
               </p>
-              <p className="text-4xl font-heading text-neon-yellow text-glow-yellow tracking-wider">
+              <p className="text-5xl font-heading text-neon-yellow text-glow-yellow tracking-wider">
                 {score.toLocaleString()}
-                <span className="text-xl text-neon-yellow/70 ml-1">점</span>
+                <span className="text-2xl text-neon-yellow/70 ml-1">점</span>
               </p>
             </div>
           </div>
           {/* Timer */}
-          <div className="glass-card rounded-2xl px-6 py-4">
+          <div className="glass-card min-w-[180px] rounded-3xl px-8 py-6">
             <div className="flex items-center gap-2 mb-1">
-              <p className="text-xs font-body text-white/50 uppercase tracking-widest">
+              <p className="text-sm font-body text-white/50 uppercase tracking-widest">
                 남은 시간
               </p>
               {seconds <= 15 && seconds > 0 && playerCount > 1 && (
@@ -390,7 +390,7 @@ export function GamePlayScreen() {
               )}
             </div>
             <p
-              className={`text-2xl font-heading ${
+                className={`text-3xl font-heading ${
                 seconds <= 15 && seconds > 0 && playerCount > 1 ? 'text-neon-orange' : 'text-white/80'
               }`}
               style={
@@ -421,7 +421,7 @@ export function GamePlayScreen() {
           transition={{
             duration: 0.3
           }}
-          className="glass-card rounded-2xl px-8 py-4 flex items-center gap-4"
+          className="glass-card min-w-[270px] rounded-3xl px-9 py-6 flex items-center gap-5"
           style={{
             boxShadow:
             combo > 5 ?
@@ -431,15 +431,15 @@ export function GamePlayScreen() {
             combo > 5 ?
             `rgba(168, 85, 247, ${Math.min(combo * 0.05, 0.5)})` :
             undefined,
-            minWidth: '200px'
+            minWidth: '270px'
           }}>
 
           <div className="w-full">
-            <p className="text-xs font-body text-white/50 uppercase tracking-widest text-right">
+            <p className="text-sm font-body text-white/50 uppercase tracking-widest text-right">
               콤보
             </p>
             <div className="flex items-baseline gap-2 justify-end">
-              <span className="text-lg font-body text-neon-purple/70">
+              <span className="text-xl font-body text-neon-purple/70">
                 COMBO
               </span>
               <motion.span
@@ -452,10 +452,10 @@ export function GamePlayScreen() {
                   scale: 1,
                   opacity: 1
                 }}
-                className="font-heading text-neon-purple text-glow-purple text-4xl"
+                className="font-heading text-neon-purple text-glow-purple text-5xl"
                 style={{
                   display: 'inline-block',
-                  minWidth: '80px',
+                  minWidth: '120px',
                   textAlign: 'right'
                 }}>
 
@@ -466,7 +466,7 @@ export function GamePlayScreen() {
         </motion.div>
       </div>
 
-      <div className="relative z-20 mx-auto -mt-2 rounded-full border border-neon-green/25 bg-surface-800/75 px-5 py-2 text-center text-sm backdrop-blur">
+      <div className="relative z-20 mx-auto -mt-1 rounded-full border border-neon-green/25 bg-surface-800/75 px-8 py-3 text-center text-lg backdrop-blur">
         <span className="font-semibold text-neon-green">압박 대상: {profile.label}</span>
         <span className="mx-2 text-white/30">|</span>
         <span className="text-white/70">목표 깊이 {profile.guideDepth}</span>
@@ -475,13 +475,13 @@ export function GamePlayScreen() {
       </div>
 
       {/* ===== MAIN AREA ===== */}
-      <div className="relative z-20 flex-1 flex items-center justify-center px-8 gap-8">
+      <div className="relative z-20 mx-auto flex w-full max-w-[1500px] flex-1 items-center justify-center gap-8 px-10 py-4 lg:grid lg:grid-cols-[240px_minmax(420px,620px)_240px] lg:gap-12">
         {/* LEFT — Depth Gauge */}
-        <div className="flex flex-col items-center gap-3 w-32">
-          <p className="text-sm font-body text-white/50 uppercase tracking-widest">
+        <div className="glass-card flex w-full flex-col items-center gap-5 rounded-[2rem] border-white/10 px-6 py-7">
+          <p className="text-xl font-body text-white/60 uppercase tracking-widest">
             압박 깊이
           </p>
-          <div className="relative w-16 h-[340px] rounded-full bg-surface-700/80 border border-white/10 overflow-hidden">
+          <div className="relative h-[390px] w-28 rounded-full bg-surface-700/80 border border-white/10 overflow-hidden">
             {/* Target zone 5-6cm = 50%-60% from bottom */}
             <div
               className="absolute left-0 right-0 bg-neon-green/15 border-y border-neon-green/30"
@@ -491,7 +491,7 @@ export function GamePlayScreen() {
               }} />
             
             <div
-              className="absolute left-1/2 -translate-x-1/2 text-[10px] font-body text-neon-green/60 whitespace-nowrap"
+              className="absolute left-1/2 -translate-x-1/2 text-sm font-body text-neon-green/80 whitespace-nowrap"
               style={{
                 bottom: '58%'
               }}>
@@ -499,7 +499,7 @@ export function GamePlayScreen() {
               6cm
             </div>
             <div
-              className="absolute left-1/2 -translate-x-1/2 text-[10px] font-body text-neon-green/60 whitespace-nowrap"
+              className="absolute left-1/2 -translate-x-1/2 text-sm font-body text-neon-green/80 whitespace-nowrap"
               style={{
                 bottom: '48%'
               }}>
@@ -531,7 +531,7 @@ export function GamePlayScreen() {
               animate={{
                 scale: 1
               }}
-              className="text-3xl font-heading"
+              className="text-5xl font-heading"
               style={{
                 color: depthColor,
                 textShadow: `0 0 15px ${depthColor}80`
@@ -539,9 +539,9 @@ export function GamePlayScreen() {
               
               {depth.toFixed(1)}
             </motion.p>
-            <p className="text-xs text-white/40 font-body">cm</p>
+            <p className="text-base text-white/50 font-body">cm</p>
             <p
-              className="text-xs font-body mt-1 px-2 py-0.5 rounded-full"
+              className="mt-2 rounded-full px-4 py-1 text-base font-body"
               style={{
                 backgroundColor: `${depthColor}20`,
                 color: depthColor
@@ -553,11 +553,11 @@ export function GamePlayScreen() {
         </div>
 
         {/* CENTER — Heart + Rhythm Ring */}
-        <div className="flex flex-col items-center justify-center flex-1 max-w-lg">
+        <div className="glass-card flex min-h-[500px] w-full flex-col items-center justify-center rounded-[3rem] border-white/10 px-8 py-8">
           <div className="relative flex items-center justify-center">
             {/* Outer rhythm ring */}
             <motion.div
-              className="absolute w-72 h-72 rounded-full border-2 border-neon-blue/30"
+              className="absolute h-[352px] w-[352px] rounded-full border-2 border-neon-blue/30"
               animate={{
                 scale: isPressed ? [1, 1.08, 1] : 1,
                 borderColor: isPressed ?
@@ -572,10 +572,10 @@ export function GamePlayScreen() {
               }} />
             
             {/* Second ring */}
-            <div className="absolute w-80 h-80 rounded-full border border-white/5 animate-spin-slow" />
+            <div className="absolute h-96 w-96 rounded-full border border-white/5 animate-spin-slow" />
             {/* Dashed ring */}
             <motion.div
-              className="absolute w-64 h-64 rounded-full"
+              className="absolute h-80 w-80 rounded-full"
               style={{
                 border: '2px dashed rgba(0, 212, 255, 0.15)'
               }}
@@ -603,7 +603,7 @@ export function GamePlayScreen() {
               className="relative z-10 flex items-center justify-center">
               
               <HeartIcon
-                className="w-32 h-32"
+                className="h-44 w-44"
                 fill={isPressed ? '#00FF88' : '#FF4466'}
                 stroke="none"
                 style={{
@@ -630,7 +630,7 @@ export function GamePlayScreen() {
                   transition={{
                     duration: 0.5
                   }}
-                  className="absolute w-32 h-32 rounded-full bg-neon-green/20" />
+                  className="absolute h-44 w-44 rounded-full bg-neon-green/20" />
 
                 }
               </AnimatePresence>
@@ -642,18 +642,18 @@ export function GamePlayScreen() {
             animate={{
               opacity: isPressed ? 1 : 0.4
             }}
-            className="mt-8 text-lg font-body text-neon-blue/70 tracking-widest">
+            className="mt-10 text-2xl font-body text-neon-blue/80 tracking-widest">
             
             {isPressed ? '누르는 중...' : '리듬에 맞춰 압박!'}
           </motion.p>
         </div>
 
         {/* RIGHT — BPM Gauge */}
-        <div className="flex flex-col items-center gap-3 w-32">
-          <p className="text-sm font-body text-white/50 uppercase tracking-widest">
+        <div className="glass-card flex w-full flex-col items-center gap-5 rounded-[2rem] border-white/10 px-6 py-7">
+          <p className="text-xl font-body text-white/60 uppercase tracking-widest">
             압박 속도
           </p>
-          <div className="relative w-16 h-[340px] rounded-full bg-surface-700/80 border border-white/10 overflow-hidden">
+          <div className="relative h-[390px] w-28 rounded-full bg-surface-700/80 border border-white/10 overflow-hidden">
             {/* Target zone 100-120 BPM mapped to gauge: (100/180)*100=55.5%, (120/180)*100=66.7% */}
             <div
               className="absolute left-0 right-0 bg-neon-green/15 border-y border-neon-green/30"
@@ -663,7 +663,7 @@ export function GamePlayScreen() {
               }} />
             
             <div
-              className="absolute left-1/2 -translate-x-1/2 text-[10px] font-body text-neon-green/60 whitespace-nowrap"
+              className="absolute left-1/2 -translate-x-1/2 text-sm font-body text-neon-green/80 whitespace-nowrap"
               style={{
                 bottom: '65%'
               }}>
@@ -671,7 +671,7 @@ export function GamePlayScreen() {
               120
             </div>
             <div
-              className="absolute left-1/2 -translate-x-1/2 text-[10px] font-body text-neon-green/60 whitespace-nowrap"
+              className="absolute left-1/2 -translate-x-1/2 text-sm font-body text-neon-green/80 whitespace-nowrap"
               style={{
                 bottom: '53%'
               }}>
@@ -703,7 +703,7 @@ export function GamePlayScreen() {
               animate={{
                 scale: 1
               }}
-              className="text-3xl font-heading"
+              className="text-5xl font-heading"
               style={{
                 color: bpmColor,
                 textShadow: `0 0 15px ${bpmColor}80`
@@ -711,9 +711,9 @@ export function GamePlayScreen() {
               
               {bpm}
             </motion.p>
-            <p className="text-xs text-white/40 font-body">BPM</p>
+            <p className="text-base text-white/50 font-body">BPM</p>
             <p
-              className="text-xs font-body mt-1 px-2 py-0.5 rounded-full"
+              className="mt-2 rounded-full px-4 py-1 text-base font-body"
               style={{
                 backgroundColor: `${bpmColor}20`,
                 color: bpmColor
