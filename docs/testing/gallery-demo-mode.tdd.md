@@ -15,6 +15,7 @@ Requirements were derived from the user's request and these reference artifacts.
 3. As a presenter, I can open stable participant and instructor URLs and leave the deterministic scenario running for four hours.
 4. As a developer with the ESP32 hardware, I can explicitly select live mode without replacing the existing WebSocket sensor path.
 5. As a server operator, I can choose real or fake backend data through validated environment variables instead of editing source code.
+6. As an existing user, I can still enter the original CPR game at `/game`.
 
 ## RED and GREEN evidence
 
@@ -36,6 +37,13 @@ Requirements were derived from the user's request and these reference artifacts.
 - GREEN result: 5 tests passed.
 - GREEN commit: `5f494ce`
 
+### Review regressions
+
+- RED command: `npm test`
+- RED result: five failures covered the missing `/game` route, stale disconnected readings, reset compression totals, and unavailable recoil presentation.
+- GREEN command: `npm test -- --run`
+- GREEN result: 6 files passed, 17 tests passed.
+
 ## Test specification
 
 | # | What is guaranteed | Test target | Type | Result |
@@ -50,10 +58,13 @@ Requirements were derived from the user's request and these reference artifacts.
 | 8 | Backend defaults to real mode and accepts explicit fake mode | `backend/test_backend_server.py` | unit | PASS |
 | 9 | Invalid ports and physically impossible payloads are rejected | `backend/test_backend_server.py` | boundary | PASS |
 | 10 | Production frontend compiles | `npm run build` | integration | PASS |
+| 11 | `/game` preserves the original CPR flow | `src/config/runtime.test.ts`, `src/pages/RoleLauncher.test.tsx` | regression | PASS |
+| 12 | Disconnects clear stale live readings and do not invent recoil data | `src/live/readings.test.ts`, `src/pages/InstructorDashboardScreen.test.tsx` | regression | PASS |
+| 13 | Compression count remains cumulative for a four-hour demo | `src/demo/scenario.test.ts` | long-run boundary | PASS |
 
 ## Coverage and quality gates
 
-- `npm run test:coverage`: 100% statements, 92.85% branches, 100% functions, 100% lines for the new runtime and scenario modules.
+- `npm run test:coverage`: 99.75% statements, 84.11% branches, 90.9% functions, 99.75% lines across runtime, scenario, live-reading, launcher, participant, and instructor modules.
 - `npm run lint`: exits successfully with 15 pre-existing warnings in legacy/unrouted files and no errors.
 - `npm audit --omit=dev`: no known production dependency vulnerabilities.
 - `pip-audit -r backend/requirements.txt`: no known vulnerabilities.

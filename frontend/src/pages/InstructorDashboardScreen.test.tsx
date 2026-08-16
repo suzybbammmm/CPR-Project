@@ -23,4 +23,26 @@ describe('InstructorDashboardScreen', () => {
     expect(html).toContain('압박 이완 비율');
     expect(html).toContain('긴급 경고');
   });
+
+  it('does not invent a recoil measurement in live mode', () => {
+    const session = buildDemoSession(0);
+    const liveSession = {
+      ...session,
+      learners: [{
+        ...session.learners[0],
+        metrics: { ...session.learners[0].metrics, recoil: null }
+      }]
+    };
+    const html = renderToStaticMarkup(
+      <InstructorDashboardScreen
+        mode="live"
+        session={liveSession}
+        selectedLearnerId="learner-1"
+        onSelectLearner={() => undefined}
+      />
+    );
+
+    expect(html).toContain('—');
+    expect(html).not.toContain('0% 이완');
+  });
 });

@@ -45,7 +45,7 @@ export function RoleLauncher({ origin }: { origin: string }) {
 
         <footer className="mt-8 flex flex-col gap-1 text-sm text-slate-500 sm:flex-row sm:justify-between">
           <span>장비가 아닌 교육의 정확도를 바꿉니다.</span>
-          <span>LifePulse Gallery Demo · 오프라인 실행 지원</span>
+          <span className="flex items-center gap-3"><a className="font-semibold text-slate-300 underline decoration-slate-600 underline-offset-4" href={links.game}>기존 게임형 훈련 화면</a>LifePulse Gallery Demo · 오프라인 실행 지원</span>
         </footer>
       </div>
     </main>

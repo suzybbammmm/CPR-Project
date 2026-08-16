@@ -26,6 +26,13 @@ describe('gallery demo scenario', () => {
     expect(getParticipantReading(12_000)).toEqual(getParticipantReading(12_000));
   });
 
+  it('keeps the compression count increasing across cycles for four hours', () => {
+    expect(getParticipantReading(72_000).compressionCount)
+      .toBeGreaterThanOrEqual(getParticipantReading(71_999).compressionCount);
+    expect(getParticipantReading(4 * 60 * 60 * 1000).compressionCount)
+      .toBeGreaterThan(20_000);
+  });
+
   it('uses the documented instructor thresholds', () => {
     expect(getStatusFromMetrics({ depthMm: 54, rate: 110, recoil: 95, score: 92 })).toBe('normal');
     expect(getStatusFromMetrics({ depthMm: 47, rate: 110, recoil: 88, score: 73 })).toBe('caution');

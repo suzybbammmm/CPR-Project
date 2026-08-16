@@ -17,6 +17,7 @@ npm run dev:host
 - 시작 화면: `http://localhost:5173`
 - 시행자 시연: `http://localhost:5173/participant?mode=demo`
 - 강사 관제 시연: `http://localhost:5173/instructor?mode=demo`
+- 기존 CPR 게임: `http://localhost:5173/game`
 
 MacBook과 iPad에서 각각 실행할 때는 두 기기를 같은 Wi-Fi에 연결하고, 터미널에 표시된 `Network` 주소를 사용합니다.
 

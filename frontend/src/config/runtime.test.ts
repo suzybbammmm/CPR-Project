@@ -33,6 +33,13 @@ describe('getRuntimeConfig', () => {
       mode: 'demo'
     });
   });
+
+  it('keeps the original gameplay flow reachable', () => {
+    expect(getRuntimeConfig('/game', '')).toEqual({
+      audience: 'game',
+      mode: 'demo'
+    });
+  });
 });
 
 describe('getShowcaseLinks', () => {
@@ -41,7 +48,8 @@ describe('getShowcaseLinks', () => {
       participantDemo: 'http://localhost:5173/participant?mode=demo',
       instructorDemo: 'http://localhost:5173/instructor?mode=demo',
       participantLive: 'http://localhost:5173/participant?mode=live',
-      instructorLive: 'http://localhost:5173/instructor?mode=live'
+      instructorLive: 'http://localhost:5173/instructor?mode=live',
+      game: 'http://localhost:5173/game'
     });
   });
 });

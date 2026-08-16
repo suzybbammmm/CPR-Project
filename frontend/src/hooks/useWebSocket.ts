@@ -38,11 +38,15 @@ export function useWebSocket(url: string) {
         };
 
         socket.onerror = () => {
-          if (!disposed) setIsConnected(false);
+          if (!disposed) {
+            setData(null);
+            setIsConnected(false);
+          }
         };
 
         socket.onclose = () => {
           if (disposed) return;
+          setData(null);
           setIsConnected(false);
           reconnectTimer = setTimeout(connect, 3000);
         };

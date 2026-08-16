@@ -12,5 +12,6 @@ describe('RoleLauncher', () => {
     expect(html).toContain('강사 관제 화면');
     expect(html).toContain('/participant?mode=demo');
     expect(html).toContain('/instructor?mode=demo');
+    expect(html).toContain('/game');
   });
 });

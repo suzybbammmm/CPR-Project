@@ -1,4 +1,4 @@
-export type Audience = 'launcher' | 'participant' | 'instructor';
+export type Audience = 'launcher' | 'participant' | 'instructor' | 'game';
 export type RuntimeMode = 'demo' | 'live';
 
 export interface RuntimeConfig {
@@ -11,6 +11,7 @@ export interface ShowcaseLinks {
   instructorDemo: string;
   participantLive: string;
   instructorLive: string;
+  game: string;
 }
 
 function normalizePath(pathname: string): string {
@@ -25,6 +26,7 @@ export function getRuntimeConfig(pathname: string, search: string): RuntimeConfi
 
   if (path === '/participant') return { audience: 'participant', mode };
   if (path === '/instructor') return { audience: 'instructor', mode };
+  if (path === '/game') return { audience: 'game', mode: 'demo' };
   return { audience: 'launcher', mode: 'demo' };
 }
 
@@ -34,6 +36,7 @@ export function getShowcaseLinks(origin: string): ShowcaseLinks {
     participantDemo: `${base}/participant?mode=demo`,
     instructorDemo: `${base}/instructor?mode=demo`,
     participantLive: `${base}/participant?mode=live`,
-    instructorLive: `${base}/instructor?mode=live`
+    instructorLive: `${base}/instructor?mode=live`,
+    game: `${base}/game`
   };
 }

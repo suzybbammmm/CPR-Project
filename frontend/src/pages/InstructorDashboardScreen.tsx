@@ -53,7 +53,7 @@ function LearnerCard({ learner, selected, onSelect }: { learner: DemoLearner; se
         <div className="space-y-1 text-right text-xs text-slate-500">
           <p><strong className="text-slate-700">{learner.metrics.depthMm.toFixed(1)}</strong> mm</p>
           <p><strong className="text-slate-700">{learner.metrics.rate}</strong> 회/분</p>
-          <p><strong className="text-slate-700">{learner.metrics.recoil}</strong>% 이완</p>
+          <p><strong className="text-slate-700">{learner.metrics.recoil ?? '—'}</strong>{learner.metrics.recoil === null ? ' 이완 미수집' : '% 이완'}</p>
         </div>
       </div>
     </button>
@@ -132,7 +132,7 @@ export function InstructorDashboardScreen({ mode, session, selectedLearnerId, on
             <div className="grid grid-cols-2 gap-3">
               <DetailMetric icon={<ArrowDownToLineIcon className="h-4 w-4" />} label="가슴 압박 깊이" value={`${selected.metrics.depthMm.toFixed(1)} mm`} target="50–60mm" />
               <DetailMetric icon={<GaugeIcon className="h-4 w-4" />} label="분당 압박 횟수" value={`${selected.metrics.rate}회`} target="100–120회" />
-              <DetailMetric icon={<RefreshCwIcon className="h-4 w-4" />} label="압박 이완 비율" value={`${selected.metrics.recoil}%`} target="90% 이상" />
+              <DetailMetric icon={<RefreshCwIcon className="h-4 w-4" />} label="압박 이완 비율" value={selected.metrics.recoil === null ? '—' : `${selected.metrics.recoil}%`} target="90% 이상" />
               <DetailMetric icon={<ZapIcon className="h-4 w-4" />} label="AED 사용 여부" value={selected.metrics.aedUsed ? '사용함' : '미사용'} target="시나리오 단계 준수" />
             </div>
             <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500"><p className="mb-1 flex items-center gap-1 font-bold text-slate-700"><CheckCircle2Icon className="h-4 w-4 text-teal-600" />권장 범위 안내</p>깊이 50–60mm · 속도 100–120회/분 · 이완 90% 이상</div>

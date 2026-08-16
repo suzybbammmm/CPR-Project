@@ -3,7 +3,7 @@ export type MonitoringStatus = 'normal' | 'caution' | 'urgent';
 export interface ParticipantReading {
   depthCm: number;
   rate: number;
-  recoil: number;
+  recoil: number | null;
   score: number;
   compressionCount: number;
   feedback: string;
@@ -14,7 +14,7 @@ export interface ParticipantReading {
 export interface LearnerMetrics {
   depthMm: number;
   rate: number;
-  recoil: number;
+  recoil: number | null;
   score: number;
   aedUsed: boolean;
 }
@@ -94,12 +94,25 @@ export function getDemoPhase(elapsedMs: number): DemoPhase {
 
 export function getParticipantReading(elapsedMs: number): ParticipantReading {
   const phase = getDemoPhase(elapsedMs);
+  const completedCycles = Math.floor(Math.max(0, elapsedMs) / CYCLE_DURATION_MS);
+  const cycleElapsed = Math.max(0, elapsedMs) % CYCLE_DURATION_MS;
+  const phaseIndex = Math.floor(cycleElapsed / PHASE_DURATION_MS);
+  const previousPhaseCompressions = PHASES
+    .slice(0, phaseIndex)
+    .reduce((total, previousPhase) => total + previousPhase.rate * PHASE_DURATION_MS / 60_000, 0);
+  const currentPhaseCompressions = phase.rate * (cycleElapsed % PHASE_DURATION_MS) / 60_000;
+  const compressionsPerCycle = PHASES.reduce(
+    (total, previousPhase) => total + previousPhase.rate * PHASE_DURATION_MS / 60_000,
+    0
+  );
   return {
     depthCm: phase.depthCm,
     rate: phase.rate,
     recoil: phase.recoil,
     score: phase.score,
-    compressionCount: phase.compressionCount + Math.floor((elapsedMs % PHASE_DURATION_MS) / 550),
+    compressionCount: Math.floor(
+      completedCycles * compressionsPerCycle + previousPhaseCompressions + currentPhaseCompressions
+    ),
     feedback: phase.feedback,
     status: phase.status,
     phaseLabel: phase.phaseLabel
@@ -110,7 +123,7 @@ export function getStatusFromMetrics(metrics: Omit<LearnerMetrics, 'aedUsed'>): 
   const criticalCount = [
     metrics.depthMm < 43 || metrics.depthMm > 65,
     metrics.rate < 85 || metrics.rate > 135,
-    metrics.recoil < 78
+    metrics.recoil !== null && metrics.recoil < 78
   ].filter(Boolean).length;
 
   if (metrics.score < 55 || criticalCount >= 2) return 'urgent';
@@ -124,7 +137,7 @@ function metricsForLearner(index: number, elapsedMs: number): LearnerMetrics {
     return {
       depthMm: reading.depthCm * 10,
       rate: reading.rate,
-      recoil: reading.recoil,
+      recoil: reading.recoil ?? 0,
       score: reading.score,
       aedUsed: elapsedMs % CYCLE_DURATION_MS >= 30_000
     };
@@ -145,7 +158,7 @@ function metricsForLearner(index: number, elapsedMs: number): LearnerMetrics {
 function alertMessage(metrics: LearnerMetrics): string {
   if (metrics.depthMm < 43) return `압박 깊이 ${metrics.depthMm.toFixed(1)}mm - 더 깊은 압박이 필요합니다.`;
   if (metrics.rate > 135) return `압박 속도 ${metrics.rate}회/분 - 즉시 속도를 낮춰주세요.`;
-  if (metrics.recoil < 78) return `압박 이완 ${metrics.recoil}% - 완전한 이완이 필요합니다.`;
+  if (metrics.recoil !== null && metrics.recoil < 78) return `압박 이완 ${metrics.recoil}% - 완전한 이완이 필요합니다.`;
   return '권장 범위를 벗어난 수행 지표가 감지되었습니다.';
 }
 
