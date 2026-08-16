@@ -3,14 +3,13 @@ import { HandoffOverlay } from './components/HandoffOverlay';
 import { ParticleBackground } from './components/shared/ParticleBackground';
 import { getRuntimeConfig, RuntimeMode } from './config/runtime';
 import { GameContextProvider, useGameContext } from './context/GameContext';
-import { buildDemoSession, DemoSession, getParticipantReading } from './demo/scenario';
+import { buildDemoSession, DemoSession } from './demo/scenario';
 import { useWebSocket } from './hooks/useWebSocket';
 import { buildLiveParticipantReading } from './live/readings';
 import { GamePlayScreen } from './pages/GamePlayScreen';
 import { InstructorDashboardScreen } from './pages/InstructorDashboardScreen';
 import { MainScreen } from './pages/MainScreen';
 import { MultiplayerResultScreen } from './pages/MultiplayerResultScreen';
-import { ParticipantSessionScreen } from './pages/ParticipantSessionScreen';
 import { RoleLauncher } from './pages/RoleLauncher';
 
 function useElapsedMilliseconds(intervalMs = 500): number {
@@ -24,17 +23,6 @@ function useElapsedMilliseconds(intervalMs = 500): number {
     return () => window.clearInterval(interval);
   }, [intervalMs, startedAt]);
   return elapsedMs;
-}
-
-function ParticipantRuntime({ mode }: { mode: RuntimeMode }) {
-  const elapsedMs = useElapsedMilliseconds();
-  const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8765';
-  const { data, isConnected } = useWebSocket(mode === 'live' ? wsUrl : '');
-  const reading = mode === 'demo'
-    ? getParticipantReading(elapsedMs)
-    : buildLiveParticipantReading(data, elapsedMs, isConnected);
-
-  return <ParticipantSessionScreen mode={mode} reading={reading} elapsedSeconds={elapsedMs / 1000} connected={mode === 'demo' || isConnected} />;
 }
 
 function buildLiveInstructorSession(data: { depth: number; bpm: number } | null, elapsedMs: number, connected: boolean): DemoSession {
@@ -94,9 +82,20 @@ function LegacyGameContent() {
   );
 }
 
+function ParticipantGameExperience({ mode }: { mode: RuntimeMode }) {
+  return (
+    <GameContextProvider dataMode={mode === 'live' ? 'websocket' : 'simulation'}>
+      <LegacyGameContent />
+      <div className="pointer-events-none fixed right-4 top-4 z-50 rounded-full border border-white/15 bg-surface-900/85 px-4 py-2 text-xs font-semibold text-white/80 shadow-lg backdrop-blur">
+        {mode === 'demo' ? '시연 모드 · 가상 센서 데이터' : '실제 센서 모드'}
+      </div>
+    </GameContextProvider>
+  );
+}
+
 export function App() {
   const config = getRuntimeConfig(window.location.pathname, window.location.search);
-  if (config.audience === 'participant') return <ParticipantRuntime mode={config.mode} />;
+  if (config.audience === 'participant') return <ParticipantGameExperience mode={config.mode} />;
   if (config.audience === 'instructor') return <InstructorRuntime mode={config.mode} />;
   if (config.audience === 'game') return <GameContextProvider><LegacyGameContent /></GameContextProvider>;
   return <RoleLauncher origin={window.location.origin} />;

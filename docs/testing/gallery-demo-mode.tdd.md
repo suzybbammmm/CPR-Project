@@ -44,6 +44,14 @@ Requirements were derived from the user's request and these reference artifacts.
 - GREEN command: `npm test -- --run`
 - GREEN result: 6 files passed, 17 tests passed.
 
+### Participant design restoration
+
+- RED command: `npm test -- --run src/context/GameContext.test.tsx`
+- RED result: the live participant override still rendered `simulation`, proving the original game context could not select URL-driven sensor modes.
+- RED commit: `26595d8`
+- GREEN command: `npm test -- --run`
+- GREEN result: 7 files passed, 19 tests passed; `/participant` renders the original CPR game experience with simulation or WebSocket selected by the URL mode.
+
 ## Test specification
 
 | # | What is guaranteed | Test target | Type | Result |
@@ -61,6 +69,7 @@ Requirements were derived from the user's request and these reference artifacts.
 | 11 | `/game` preserves the original CPR flow | `src/config/runtime.test.ts`, `src/pages/RoleLauncher.test.tsx` | regression | PASS |
 | 12 | Disconnects clear stale live readings and do not invent recoil data | `src/live/readings.test.ts`, `src/pages/InstructorDashboardScreen.test.tsx` | regression | PASS |
 | 13 | Compression count remains cumulative for a four-hour demo | `src/demo/scenario.test.ts` | long-run boundary | PASS |
+| 14 | Original participant design supports explicit simulation and WebSocket modes | `src/context/GameContext.test.tsx` | regression | PASS |
 
 ## Coverage and quality gates
 

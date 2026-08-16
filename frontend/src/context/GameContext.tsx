@@ -3,15 +3,15 @@ import { GameContextType, PlayerResult, Screen, DataMode } from '../types/game.t
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-export function GameContextProvider({ children }: { children: ReactNode }) {
+export function GameContextProvider({ children, dataMode: dataModeOverride }: { children: ReactNode; dataMode?: DataMode }) {
   const [playerCount, setPlayerCount] = useState(1);
   const [screen, setScreen] = useState<Screen>('main');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [allPlayerResults, setAllPlayerResults] = useState<PlayerResult[]>([]);
 
   // Read from environment variable
-  const dataMode: DataMode =
-    import.meta.env.VITE_DATA_MODE === 'websocket' ? 'websocket' : 'simulation';
+  const dataMode: DataMode = dataModeOverride
+    ?? (import.meta.env.VITE_DATA_MODE === 'websocket' ? 'websocket' : 'simulation');
 
   const startGame = () => {
     setCurrentPlayerIndex(0);
