@@ -1,58 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { WebSocketMessage } from '../types/game.types';
 
 export function useWebSocket(url: string) {
   const [data, setData] = useState<WebSocketMessage | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
-
-  const connect = () => {
-    if (!url) {
-      setIsConnected(false);
-      return;
-    }
-
-    try {
-      const ws = new WebSocket(url);
-
-      ws.onopen = () => {
-        console.log('WebSocket connected');
-        setIsConnected(true);
-        // Send initial message
-        ws.send(JSON.stringify({ type: 'web' }));
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const message: WebSocketMessage = JSON.parse(event.data);
-          setData(message);
-        } catch (e) {
-          console.error('Failed to parse WebSocket message:', e);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
-        setIsConnected(false);
-        // Attempt reconnection after 3 seconds
-        if (url) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('Attempting to reconnect...');
-            connect();
-          }, 3000);
-        }
-      };
-
-      wsRef.current = ws;
-    } catch (error) {
-      console.error('WebSocket connection failed:', error);
-    }
-  };
 
   useEffect(() => {
     if (!url) {
@@ -61,15 +12,52 @@ export function useWebSocket(url: string) {
       return;
     }
 
+    let disposed = false;
+    let socket: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = () => {
+      if (disposed) return;
+
+      try {
+        socket = new WebSocket(url);
+
+        socket.onopen = () => {
+          if (disposed || !socket) return;
+          setIsConnected(true);
+          socket.send(JSON.stringify({ type: 'web' }));
+        };
+
+        socket.onmessage = (event) => {
+          if (disposed) return;
+          try {
+            setData(JSON.parse(event.data) as WebSocketMessage);
+          } catch (error) {
+            console.error('Failed to parse WebSocket message:', error);
+          }
+        };
+
+        socket.onerror = () => {
+          if (!disposed) setIsConnected(false);
+        };
+
+        socket.onclose = () => {
+          if (disposed) return;
+          setIsConnected(false);
+          reconnectTimer = setTimeout(connect, 3000);
+        };
+      } catch (error) {
+        console.error('WebSocket connection failed:', error);
+        if (!disposed) reconnectTimer = setTimeout(connect, 3000);
+      }
+    };
+
     connect();
 
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      disposed = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (socket && socket.readyState < WebSocket.CLOSING) socket.close();
     };
   }, [url]);
 
