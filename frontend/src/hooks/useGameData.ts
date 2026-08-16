@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useWebSocket } from './useWebSocket';
 import { useGameContext } from '../context/GameContext';
+import { getDemoWaveformReading } from '../utils/demoWaveform';
 
 interface GameData {
   depth: number;
@@ -9,7 +10,7 @@ interface GameData {
 }
 
 export function useGameData() {
-  const { dataMode } = useGameContext();
+  const { dataMode, victimType } = useGameContext();
   const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8765';
 
   // WebSocket mode
@@ -19,7 +20,7 @@ export function useGameData() {
 
   // Simulation mode
   const [simulationData, setSimulationData] = useState<GameData>({
-    depth: 5.4,
+    depth: 0,
     bpm: 108,
     accel_z: 0
   });
@@ -27,16 +28,13 @@ export function useGameData() {
   // Simulate data in simulation mode
   useEffect(() => {
     if (dataMode === 'simulation') {
-      const interval = setInterval(() => {
-        setSimulationData({
-          depth: 4.5 + Math.random() * 2.2,
-          bpm: Math.floor(90 + Math.random() * 40),
-          accel_z: Math.random() * 2 - 1
-        });
-      }, 800);
+      const startedAt = Date.now();
+      const update = () => setSimulationData(getDemoWaveformReading(victimType, Date.now() - startedAt));
+      update();
+      const interval = setInterval(update, 80);
       return () => clearInterval(interval);
     }
-  }, [dataMode]);
+  }, [dataMode, victimType]);
 
   // Return appropriate data based on mode
   if (dataMode === 'websocket') {

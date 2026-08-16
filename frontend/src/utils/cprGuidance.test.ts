@@ -15,6 +15,8 @@ describe('CPR guidance profiles', () => {
   it('gives depth feedback against the selected victim target', () => {
     expect(getCompressionFeedback('adult', 4.4, 110).message).toContain('더 깊게');
     expect(getCompressionFeedback('infant', 5.1, 110).message).toContain('조금 줄이');
+    expect(getCompressionFeedback('adult', 5.5, 90).message).toContain('속도를 높이');
+    expect(getCompressionFeedback('adult', 5.5, 130).message).toContain('속도를 조금 낮추');
     expect(getCompressionFeedback('child', 5, 110).tone).toBe('good');
   });
 });

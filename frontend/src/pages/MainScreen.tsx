@@ -2,11 +2,12 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { HeartIcon, UsersIcon } from 'lucide-react';
 import { useGameContext } from '../context/GameContext';
+import { CPR_PROFILES, VictimType } from '../utils/cprGuidance';
 
 const PLAYER_OPTIONS = [1, 2, 3, 4];
 
 export function MainScreen() {
-  const { playerCount, setPlayerCount, startGame, dataMode } = useGameContext();
+  const { playerCount, setPlayerCount, victimType, setVictimType, startGame, dataMode } = useGameContext();
 
   return (
     <div className="relative w-full h-screen min-h-screen overflow-hidden flex flex-col items-center justify-center font-body">
@@ -38,12 +39,45 @@ export function MainScreen() {
         </p>
       </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+        className="w-full max-w-3xl px-8 mb-8"
+      >
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <HeartIcon className="w-5 h-5 text-neon-green" />
+          <p className="text-xl font-heading text-white/80">압박 대상 선택</p>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {(Object.keys(CPR_PROFILES) as VictimType[]).map(type => {
+            const profile = CPR_PROFILES[type];
+            const selected = victimType === type;
+            return (
+              <motion.button
+                key={type}
+                onClick={() => setVictimType(type)}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className={`glass-card rounded-2xl px-4 py-4 text-left transition-all ${selected ? 'neon-border-green' : 'border-white/10'}`}
+                style={{ boxShadow: selected ? '0 0 24px rgba(0,255,136,0.22)' : undefined }}
+              >
+                <p className="font-heading text-xl text-white">{profile.label}</p>
+                <p className="mt-1 text-xs text-white/50">{profile.description}</p>
+                <p className="mt-2 text-sm font-semibold text-neon-green">{profile.guideDepth}</p>
+              </motion.button>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-center text-xs text-white/40">교육용 가이드 · 실제 상황에서는 정식 심폐소생술 교육을 따르세요.</p>
+      </motion.div>
+
       {/* Player Selection */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="w-full max-w-3xl px-8 mb-12"
+        className="w-full max-w-3xl px-8 mb-10"
       >
         <div className="flex items-center justify-center gap-3 mb-6">
           <UsersIcon className="w-6 h-6 text-neon-purple" />

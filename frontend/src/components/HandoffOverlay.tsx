@@ -2,9 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRightIcon, CheckCircleIcon } from 'lucide-react';
 import { useGameContext } from '../context/GameContext';
+import { CPR_PROFILES } from '../utils/cprGuidance';
 
 export function HandoffOverlay() {
-  const { currentPlayerIndex, playerCount, proceedToNextPlayer } = useGameContext();
+  const { currentPlayerIndex, playerCount, victimType, proceedToNextPlayer } = useGameContext();
 
   const nextPlayerIndex = currentPlayerIndex + 1;
   const isLastPlayer = nextPlayerIndex >= playerCount;
@@ -69,6 +70,10 @@ export function HandoffOverlay() {
           </motion.div>
         )}
 
+        <p className="mb-8 text-lg text-white/60">
+          {CPR_PROFILES[victimType].label} 압박 목표: <span className="font-semibold text-neon-green">{CPR_PROFILES[victimType].guideDepth}</span>
+        </p>
+
         {/* Handoff Button */}
         <motion.button
           initial={{ opacity: 0, y: 30 }}
@@ -100,7 +105,7 @@ export function HandoffOverlay() {
           className="mt-8"
         >
           <p className="text-lg text-white/50 font-body">
-            {isLastPlayer ? '모든 플레이어가 완료했습니다' : '다음 플레이어가 준비되면 버튼을 클릭하세요'}
+            {isLastPlayer ? '모든 플레이어가 완료했습니다' : '지금 교대하세요. 다음 플레이어가 준비되면 버튼을 클릭하세요.'}
           </p>
           {!isLastPlayer && (
             <motion.div

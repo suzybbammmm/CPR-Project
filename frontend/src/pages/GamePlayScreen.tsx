@@ -1,26 +1,18 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HeartIcon, ZapIcon, ActivityIcon } from 'lucide-react';
+import { HeartIcon, ZapIcon } from 'lucide-react';
 import { useGameContext } from '../context/GameContext';
 import { useGameData } from '../hooks/useGameData';
 import { useCountdown } from '../hooks/useCountdown';
 import { calculatePoints, calculateAverages, calculateProperPercent } from '../utils/scoring';
 import { calculateGrade } from '../utils/grading';
 import { DataPoint } from '../types/game.types';
+import { CPR_PROFILES, getCompressionFeedback, getRotationPrompt } from '../utils/cprGuidance';
 
-const FEEDBACK_MESSAGES = [
-'좋아요! 👍',
-'정확한 압박입니다! ✅',
-'속도를 조금 더 유지하세요! 💪',
-'완벽한 깊이! 🎯',
-'리듬이 좋습니다! 🎵',
-'조금 더 깊게 눌러주세요! ⬇️',
-'훌륭합니다! 계속 유지! 🔥'];
-
-function getDepthColor(depth: number): string {
-  if (depth >= 5 && depth <= 6) return '#00FF88';
-  if (depth >= 4 && depth < 5) return '#FBBF24';
-  if (depth > 6 && depth <= 7) return '#FBBF24';
+function getDepthColor(depth: number, min: number, max: number): string {
+  if (depth >= min && depth <= max) return '#00FF88';
+  if (depth >= min - 1 && depth < min) return '#FBBF24';
+  if (depth > max && depth <= max + 1) return '#FBBF24';
   return '#FF4444';
 }
 function getBpmColor(bpm: number): string {
@@ -29,9 +21,9 @@ function getBpmColor(bpm: number): string {
   if (bpm > 120 && bpm <= 135) return '#FBBF24';
   return '#FF4444';
 }
-function getDepthLabel(depth: number): string {
-  if (depth >= 5 && depth <= 6) return '적정';
-  if (depth < 5) return '얕음';
+function getDepthLabel(depth: number, min: number, max: number): string {
+  if (depth >= min && depth <= max) return '적정';
+  if (depth < min) return '얕음';
   return '깊음';
 }
 function getBpmLabel(bpm: number): string {
@@ -40,18 +32,17 @@ function getBpmLabel(bpm: number): string {
   return '빠름';
 }
 export function GamePlayScreen() {
-  const { savePlayerResult, currentPlayerIndex, playerCount, setScreen } = useGameContext();
-  const { data, isConnected } = useGameData();
-  const { seconds, isFinished, start, formatTime } = useCountdown(30); // TODO: 테스트용 30초, 원래는 120초
+  const { savePlayerResult, currentPlayerIndex, playerCount, victimType, setScreen } = useGameContext();
+  const { data } = useGameData();
+  const { seconds, isFinished, start, formatTime } = useCountdown(120);
+  const profile = CPR_PROFILES[victimType];
 
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [dataHistory, setDataHistory] = useState<DataPoint[]>([]); // For graph visualization
-  const [compressionPeaks, setCompressionPeaks] = useState<DataPoint[]>([]); // For proper % calculation
+  const [, setCompressionPeaks] = useState<DataPoint[]>([]); // For proper % calculation
   const [isPressed, setIsPressed] = useState(false);
-  const [currentFeedback, setCurrentFeedback] = useState(FEEDBACK_MESSAGES[0]);
-  const [feedbackKey, setFeedbackKey] = useState(0);
   const [smoothedDepth, setSmoothedDepth] = useState(5.4);
   const [peakDepth, setPeakDepth] = useState(5.4);
 
@@ -159,7 +150,8 @@ export function GamePlayScreen() {
           const { points, newCombo } = calculatePoints(
             peakDepthValue,
             currentBpm,
-            comboRef.current
+            comboRef.current,
+            victimType
           );
 
           // Update combo (both state and ref)
@@ -185,7 +177,7 @@ export function GamePlayScreen() {
 
       lastRawDepthRef.current = currentDepth;
     }
-  }, [data]);
+  }, [data, victimType]);
 
   // Get depth and bpm from data or use defaults
   // Use weighted average: 70% peak + 30% smoothed for faster response to peak compression
@@ -203,7 +195,6 @@ export function GamePlayScreen() {
     setMaxCombo(0);
     setDataHistory([]);
     setCompressionPeaks([]);
-    setFeedbackKey(0);
 
     // Reset compression peak detection
     compressionPeakRef.current = 0;
@@ -276,17 +267,6 @@ export function GamePlayScreen() {
 
   // Note: Scoring logic happens in real-time based on compression peaks (not interval)
 
-  // Rotate feedback messages
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentFeedback(
-        FEEDBACK_MESSAGES[Math.floor(Math.random() * FEEDBACK_MESSAGES.length)]
-      );
-      setFeedbackKey((k) => k + 1);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
   // Handle game finish (manual or timer)
   const handleFinish = useCallback(() => {
     console.log('🏁 게임 종료! 데이터 분석 시작...');
@@ -305,7 +285,7 @@ export function GamePlayScreen() {
     const samplesForAverage = dataHistory.filter(d => d.depth >= 3);
 
     const { avgDepth, avgBpm } = calculateAverages(samplesForAverage);
-    const properPercent = calculateProperPercent(peaksForProper);
+    const properPercent = calculateProperPercent(peaksForProper, victimType);
     const grade = calculateGrade(score);
 
     console.log('📈 분석 결과:', {
@@ -328,6 +308,7 @@ export function GamePlayScreen() {
       avgDepth,
       avgBpm,
       maxCombo,
+      victimType,
       dataHistory // Keep graph data for visualization
     };
 
@@ -338,7 +319,7 @@ export function GamePlayScreen() {
     } else {
       setScreen('final-results');
     }
-  }, [score, dataHistory, maxCombo, currentPlayerIndex, playerCount, savePlayerResult, setScreen]);
+  }, [score, dataHistory, maxCombo, currentPlayerIndex, playerCount, savePlayerResult, setScreen, victimType]);
 
   // Auto-finish when timer ends
   useEffect(() => {
@@ -347,9 +328,10 @@ export function GamePlayScreen() {
     }
   }, [isFinished, handleFinish]);
   const depthPercent = Math.min(Math.max(depth / 10 * 100, 0), 100);
-  const depthColor = getDepthColor(depth);
+  const depthColor = getDepthColor(depth, profile.targetDepthCm.min, profile.targetDepthCm.max);
   const bpmColor = getBpmColor(bpm);
-  const comboScale = Math.min(1 + combo * 0.02, 2);
+  const feedback = getCompressionFeedback(victimType, depth, bpm);
+  const rotationPrompt = getRotationPrompt({ playerCount, secondsRemaining: seconds });
   return (
     <div className="relative w-full h-screen min-h-screen overflow-hidden flex flex-col font-body">
       {/* ===== ROTATION GUIDE BANNER ===== */}
@@ -363,7 +345,7 @@ export function GamePlayScreen() {
           <div className="glass-card rounded-full px-6 py-2 flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-neon-blue animate-pulse" />
             <p className="text-sm font-body text-white/70 tracking-wide">
-              <span className="text-neon-blue font-semibold">가이드라인:</span> CPR은 2분마다 교대하는 것을 권장합니다
+              <span className="text-neon-blue font-semibold">{currentPlayerIndex + 1}번 실습자 진행 중:</span> 2분마다 교대하고, 중단은 10초 이내로 유지하세요
             </p>
           </div>
         </motion.div>
@@ -484,6 +466,14 @@ export function GamePlayScreen() {
         </motion.div>
       </div>
 
+      <div className="relative z-20 mx-auto -mt-2 rounded-full border border-neon-green/25 bg-surface-800/75 px-5 py-2 text-center text-sm backdrop-blur">
+        <span className="font-semibold text-neon-green">압박 대상: {profile.label}</span>
+        <span className="mx-2 text-white/30">|</span>
+        <span className="text-white/70">목표 깊이 {profile.guideDepth}</span>
+        <span className="mx-2 text-white/30">|</span>
+        <span className="text-white/50">{profile.handPlacement}</span>
+      </div>
+
       {/* ===== MAIN AREA ===== */}
       <div className="relative z-20 flex-1 flex items-center justify-center px-8 gap-8">
         {/* LEFT — Depth Gauge */}
@@ -557,7 +547,7 @@ export function GamePlayScreen() {
                 color: depthColor
               }}>
               
-              {getDepthLabel(depth)}
+              {getDepthLabel(depth, profile.targetDepthCm.min, profile.targetDepthCm.max)}
             </p>
           </div>
         </div>
@@ -740,7 +730,7 @@ export function GamePlayScreen() {
         {/* Feedback message */}
         <div className="flex-1 flex justify-center">
           <AnimatePresence mode="wait">
-            {seconds <= 10 && seconds > 0 && playerCount > 1 ? (
+            {rotationPrompt?.kind === 'warning' ? (
               <motion.div
                 key="rotation-warning"
                 initial={{
@@ -791,7 +781,7 @@ export function GamePlayScreen() {
               </motion.div>
             ) : (
               <motion.div
-                key={feedbackKey}
+                key={`${victimType}-${Math.round(depth * 10)}-${bpm}`}
                 initial={{
                   opacity: 0,
                   y: 15
@@ -810,7 +800,7 @@ export function GamePlayScreen() {
                 className="glass-card rounded-2xl px-10 py-4">
 
                 <p className="text-2xl font-heading text-white/90 tracking-wider text-glow-white">
-                  {currentFeedback}
+                  {feedback.message}
                 </p>
               </motion.div>
             )}

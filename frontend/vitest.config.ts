@@ -8,6 +8,7 @@ export default defineConfig({
         'src/config/runtime.ts',
         'src/demo/scenario.ts',
         'src/live/readings.ts',
+        'src/utils/cprGuidance.ts',
         'src/pages/RoleLauncher.tsx',
         'src/pages/ParticipantSessionScreen.tsx',
         'src/pages/InstructorDashboardScreen.tsx'

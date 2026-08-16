@@ -7,6 +7,7 @@ Requirements were derived from the user's request and these reference artifacts.
 - `최종발표대본.pdf`
 - `Retry(김지윤) 최종최종최종.pdf`
 - `강사관제 화면/src/*`
+- American Heart Association high-quality CPR guidance (adult 5–6cm; child about 5cm and infant about 4cm / at least one-third of chest depth).
 
 ## User journeys
 
@@ -16,6 +17,8 @@ Requirements were derived from the user's request and these reference artifacts.
 4. As a developer with the ESP32 hardware, I can explicitly select live mode without replacing the existing WebSocket sensor path.
 5. As a server operator, I can choose real or fake backend data through validated environment variables instead of editing source code.
 6. As an existing user, I can still enter the original CPR game at `/game`.
+7. As a trainee, I can choose adult, child, or infant practice and receive depth feedback matched to that selection.
+8. As a multi-player team, I receive an advance rotation warning and a clear handoff instruction at the end of a two-minute turn.
 
 ## RED and GREEN evidence
 
@@ -52,6 +55,15 @@ Requirements were derived from the user's request and these reference artifacts.
 - GREEN command: `npm test -- --run`
 - GREEN result: 7 files passed, 19 tests passed; `/participant` renders the original CPR game experience with simulation or WebSocket selected by the URL mode.
 
+### Victim-specific guidance and rotation
+
+- RED commands: `npm test -- --run src/utils/cprGuidance.test.ts`, `npm test -- --run src/utils/demoWaveform.test.ts`
+- RED result: both suites failed because the profile/rotation and compression-waveform modules did not exist.
+- RED commits: `042bf2b`, `8e954e7`
+- GREEN command: `npm test -- --run`
+- GREEN result: 9 files passed, 27 tests passed.
+- Browser check: selecting child + two players showed a child target of about 5cm, the active trainee label, two-minute rotation guidance, score 70, and combo 5 after the deterministic release/compression waveform advanced.
+
 ## Test specification
 
 | # | What is guaranteed | Test target | Type | Result |
@@ -70,6 +82,9 @@ Requirements were derived from the user's request and these reference artifacts.
 | 12 | Disconnects clear stale live readings and do not invent recoil data | `src/live/readings.test.ts`, `src/pages/InstructorDashboardScreen.test.tsx` | regression | PASS |
 | 13 | Compression count remains cumulative for a four-hour demo | `src/demo/scenario.test.ts` | long-run boundary | PASS |
 | 14 | Original participant design supports explicit simulation and WebSocket modes | `src/context/GameContext.test.tsx` | regression | PASS |
+| 15 | Adult, child, and infant use distinct depth targets with selected-target feedback | `src/utils/cprGuidance.test.ts` | unit | PASS |
+| 16 | Multi-player rotation warns at 10 seconds and prompts handoff at zero | `src/utils/cprGuidance.test.ts` | unit | PASS |
+| 17 | The demo waveform releases between compressions and adapts to the selected victim | `src/utils/demoWaveform.test.ts` | unit | PASS |
 
 ## Coverage and quality gates
 

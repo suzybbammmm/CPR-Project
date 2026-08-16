@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { GameContextType, PlayerResult, Screen, DataMode } from '../types/game.types';
+import type { VictimType } from '../utils/cprGuidance';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameContextProvider({ children, dataMode: dataModeOverride }: { children: ReactNode; dataMode?: DataMode }) {
   const [playerCount, setPlayerCount] = useState(1);
+  const [victimType, setVictimType] = useState<VictimType>('adult');
   const [screen, setScreen] = useState<Screen>('main');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [allPlayerResults, setAllPlayerResults] = useState<PlayerResult[]>([]);
@@ -41,6 +43,8 @@ export function GameContextProvider({ children, dataMode: dataModeOverride }: { 
   const value: GameContextType = {
     playerCount,
     setPlayerCount,
+    victimType,
+    setVictimType,
     dataMode,
     screen,
     setScreen,
