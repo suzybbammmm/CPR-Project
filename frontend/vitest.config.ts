@@ -9,6 +9,7 @@ export default defineConfig({
         'src/demo/scenario.ts',
         'src/live/readings.ts',
         'src/utils/cprGuidance.ts',
+        'src/components/LivePracticeMonitor.tsx',
         'src/pages/RoleLauncher.tsx',
         'src/pages/ParticipantSessionScreen.tsx',
         'src/pages/InstructorDashboardScreen.tsx'

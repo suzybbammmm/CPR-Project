@@ -64,6 +64,15 @@ Requirements were derived from the user's request and these reference artifacts.
 - GREEN result: 9 files passed, 27 tests passed.
 - Browser check: selecting child + two players showed a child target of about 5cm, the active trainee label, two-minute rotation guidance, score 70, and combo 5 after the deterministic release/compression waveform advanced.
 
+### Real-time practice monitor
+
+- RED command: `npm test -- --run src/components/LivePracticeMonitor.test.tsx`
+- RED result: the suite failed because the real-time monitor component did not exist.
+- RED commit: `67f893d`
+- GREEN command: `npm test -- --run`
+- GREEN result: 10 files passed, 29 tests passed.
+- Browser check: demo mode displayed the current depth and rate, a 12-second depth-trend chart, a rate-trend chart, corrective feedback, compression count, proper-compression ratio, averages, and rotation status on one screen.
+
 ## Test specification
 
 | # | What is guaranteed | Test target | Type | Result |
@@ -85,6 +94,7 @@ Requirements were derived from the user's request and these reference artifacts.
 | 15 | Adult, child, and infant use distinct depth targets with selected-target feedback | `src/utils/cprGuidance.test.ts` | unit | PASS |
 | 16 | Multi-player rotation warns at 10 seconds and prompts handoff at zero | `src/utils/cprGuidance.test.ts` | unit | PASS |
 | 17 | The demo waveform releases between compressions and adapts to the selected victim | `src/utils/demoWaveform.test.ts` | unit | PASS |
+| 18 | The real-time practice monitor shows measurements, both trend charts, key practice metrics, and corrective feedback together | `src/components/LivePracticeMonitor.test.tsx` | component | PASS |
 
 ## Coverage and quality gates
 

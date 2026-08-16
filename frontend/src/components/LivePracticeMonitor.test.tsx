@@ -27,6 +27,7 @@ describe('LivePracticeMonitor', () => {
           { time: '0.0s', depth: 0, bpm: 108, timestamp: 1 },
           { time: '0.2s', depth: 5.4, bpm: 108, timestamp: 2 }
         ]}
+        onFinish={() => undefined}
       />
     );
 
@@ -37,5 +38,13 @@ describe('LivePracticeMonitor', () => {
     expect(html).toContain('누적 압박');
     expect(html).toContain('적정 압박 비율');
     expect(html).toContain('좋습니다. 깊이와 속도를 유지하세요.');
+  });
+
+  it('renders an urgent corrective state without hiding the graphs', () => {
+    const html = renderToStaticMarkup(
+      <LivePracticeMonitor victimLabel="영아" targetDepth="약 4cm" handPlacement="두 손가락" depth={4.8} bpm={130} feedback="압박 속도를 조금 낮추세요." feedbackTone="urgent" compressionCount={3} properPercent={40} averageDepth={4.2} averageBpm={130} score={20} combo={0} secondsRemaining={90} playerLabel="1번 실습자" rotationMessage="개인 실습 진행 중" history={[]} onFinish={() => undefined} />
+    );
+    expect(html).toContain('압박 속도를 조금 낮추세요.');
+    expect(html).toContain('압박 깊이 변화');
   });
 });
