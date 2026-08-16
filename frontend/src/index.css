@@ -9,6 +9,7 @@
 /* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
 
 :root {
+  font-size: 16px;
   --neon-blue: #00D4FF;
   --neon-green: #00FF88;
   --neon-orange: #FF6B35;
@@ -17,6 +18,13 @@
   --surface-900: #0B0E1A;
   --surface-800: #111427;
   --surface-700: #1A1E35;
+}
+
+/* Gallery display: the 13-inch MacBook is the primary presentation surface. */
+@media (min-width: 1024px) {
+  :root {
+    font-size: 18px;
+  }
 }
 body {
   background-color: var(--surface-900);
