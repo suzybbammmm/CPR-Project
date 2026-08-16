@@ -8,6 +8,11 @@ export function useWebSocket(url: string) {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
 
   const connect = () => {
+    if (!url) {
+      setIsConnected(false);
+      return;
+    }
+
     try {
       const ws = new WebSocket(url);
 
@@ -35,10 +40,12 @@ export function useWebSocket(url: string) {
         console.log('WebSocket disconnected');
         setIsConnected(false);
         // Attempt reconnection after 3 seconds
-        reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('Attempting to reconnect...');
-          connect();
-        }, 3000);
+        if (url) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.log('Attempting to reconnect...');
+            connect();
+          }, 3000);
+        }
       };
 
       wsRef.current = ws;
@@ -48,6 +55,12 @@ export function useWebSocket(url: string) {
   };
 
   useEffect(() => {
+    if (!url) {
+      setData(null);
+      setIsConnected(false);
+      return;
+    }
+
     connect();
 
     return () => {

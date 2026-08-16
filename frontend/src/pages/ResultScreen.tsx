@@ -57,8 +57,8 @@ function ChartTooltip({ active, payload, label }: any) {
 // ─── Animated Counter Hook ───
 function useCountUp(
 target: number,
-duration: number = 2.5,
-delay: number = 0.5)
+duration = 2.5,
+delay = 0.5)
 {
   const [value, setValue] = useState(0);
   useEffect(() => {
