@@ -2,6 +2,47 @@
 
 심폐소생술(CPR) 훈련을 위한 실시간 피드백 게임 시스템입니다. ESP32 센서를 통해 압박 깊이와 속도를 측정하고, 게이미피케이션 요소로 재미있게 학습할 수 있습니다.
 
+## 🖥️ 갤러리워크 듀얼 화면
+
+장비가 없는 전시 환경에서도 시행자 화면과 강사 관제 화면을 서로 다른 기기에서 실행할 수 있습니다. 시연 모드는 백엔드, 센서, 인터넷 연결이 필요하지 않으며 72초 동안 `정상 → 깊이 부족 → 속도 과다 → 이완 부족 → 긴급 → 회복` 시나리오를 반복합니다.
+
+```bash
+cd frontend
+npm install
+npm run dev:host
+```
+
+한 대의 Mac에서 확인할 때:
+
+- 시작 화면: `http://localhost:5173`
+- 시행자 시연: `http://localhost:5173/participant?mode=demo`
+- 강사 관제 시연: `http://localhost:5173/instructor?mode=demo`
+
+MacBook과 iPad에서 각각 실행할 때는 두 기기를 같은 Wi-Fi에 연결하고, 터미널에 표시된 `Network` 주소를 사용합니다.
+
+- iPad: `http://<MAC_IP>:5173/participant?mode=demo`
+- MacBook: `http://localhost:5173/instructor?mode=demo`
+
+시연 화면에는 실제 측정으로 오인되지 않도록 `시연 모드 · 가상 센서 데이터`가 항상 표시됩니다. 운영 중에는 Mac의 자동 잠자기와 두 기기의 자동 잠금을 해제하고, 행사 전에 `npm install`을 완료해야 오프라인에서도 실행할 수 있습니다.
+
+### 실제 센서 화면
+
+```bash
+# 터미널 1: 실제 센서 WebSocket 서버
+cd backend
+source venv/bin/activate
+LIFEPULSE_DEV_MODE=false python backend_server.py
+
+# 터미널 2: 프런트엔드
+cd frontend
+npm run dev:host
+```
+
+- 실제 시행자 화면: `http://localhost:5173/participant?mode=live`
+- 실제 강사 화면: `http://localhost:5173/instructor?mode=live`
+
+현재 ESP32 메시지는 단일 센서 스트림이므로 실제 강사 화면에서는 스테이션 A 한 명을 표시합니다. 8명 동시 화면은 장비 없는 시연 모드에서 확인할 수 있습니다.
+
 ## ✨ 주요 기능
 
 - 📊 **실시간 압박 분석**: 깊이(5-6cm)와 속도(100-120 BPM) 실시간 측정
@@ -50,8 +91,8 @@ venv\Scripts\activate     # Windows
 # 패키지 설치
 pip install -r requirements.txt
 
-# 서버 실행 (개발 모드 기본 활성화)
-python backend_server.py
+# 가짜 센서 백엔드 실행 (필요할 때만)
+LIFEPULSE_DEV_MODE=true python backend_server.py
 ```
 
 **터미널 출력 확인:**
@@ -93,25 +134,19 @@ npm run dev
 
 ### 📋 시나리오별 설정
 
-프로젝트는 **백엔드**와 **프론트엔드** 두 곳에서 데이터 모드를 설정할 수 있습니다.
+프런트엔드는 URL의 `mode`로, 백엔드는 환경변수로 데이터 모드를 분리합니다.
 
 ### 👥 **팀원용 (마네킹 없이 개발)**
 
-#### 백엔드: `backend/backend_server.py`
-```python
-DEV_MODE = True  # 가짜 데이터 생성 (기본값)
-```
-
 #### 프론트엔드: `frontend/.env`
 ```bash
-# simulation: 프론트엔드 자체에서 가짜 데이터 생성
-VITE_DATA_MODE=simulation
-
+# 실제 센서 URL을 사용할 때만 필요
 VITE_WEBSOCKET_URL=ws://localhost:8765
 ```
 
 **이 설정으로:**
 - 백엔드 없이도 프론트엔드만 실행 가능
+- URL에서 `?mode=demo` 사용
 - UI 개발에 집중 가능
 - 마네킹, ESP32 불필요
 
@@ -119,16 +154,13 @@ VITE_WEBSOCKET_URL=ws://localhost:8765
 
 ### 🔧 **마네킹 보유자용 (실제 센서 데이터)**
 
-#### 백엔드: `backend/backend_server.py`
-```python
-DEV_MODE = False  # 실제 ESP32 데이터 사용
+#### 백엔드 환경변수
+```bash
+LIFEPULSE_DEV_MODE=false python backend_server.py
 ```
 
 #### 프론트엔드: `frontend/.env`
 ```bash
-# websocket: 백엔드 서버와 연결
-VITE_DATA_MODE=websocket
-
 VITE_WEBSOCKET_URL=ws://localhost:8765
 ```
 
@@ -140,8 +172,9 @@ VITE_WEBSOCKET_URL=ws://localhost:8765
 **실행 순서:**
 1. ESP32 마네킹에 전원 연결
 2. 백엔드 서버 실행 (`python backend_server.py`)
-3. 프론트엔드 실행 (`npm run dev`)
-4. 마네킹 압박 시작
+3. 프론트엔드 실행 (`npm run dev:host`)
+4. `/participant?mode=live` 또는 `/instructor?mode=live` 접속
+5. 마네킹 압박 시작
 
 ---
 
@@ -241,14 +274,12 @@ cpr-project/
 
 **증상:** 백엔드 터미널에 연결 메시지가 없음
 
-**원인:** 프론트엔드가 `simulation` 모드로 설정되어 있음
+**원인:** 시연 모드 URL에 접속했거나 실제 센서 서버가 실행되지 않음
 
 **해결 방법:**
-1. `frontend/.env` 파일 확인
-   ```bash
-   VITE_DATA_MODE=websocket  # simulation이 아닌 websocket으로 설정
-   ```
-2. 프론트엔드 재시작 (Ctrl+C 후 `npm run dev`)
+1. URL이 `/participant?mode=live`인지 확인
+2. `frontend/.env`의 `VITE_WEBSOCKET_URL` 확인
+3. 프론트엔드 재시작
 
 ---
 
@@ -275,16 +306,13 @@ pip install -r requirements.txt
 
 ---
 
-### ❌ 프론트엔드에서 가짜 데이터만 나옴 (백엔드 연결 안 됨)
+### ❌ 프론트엔드에서 가짜 데이터만 나옴
 
-**원인:** `VITE_DATA_MODE`가 `simulation`으로 설정됨
+**원인:** URL에 `mode=demo`가 지정됨
 
 **해결 방법:**
-1. `frontend/.env` 파일 수정
-   ```bash
-   VITE_DATA_MODE=websocket
-   ```
-2. 프론트엔드 재시작 필수 (환경 변수는 빌드 시 적용됨)
+1. 실제 센서 서버 실행
+2. `/participant?mode=live` 또는 `/instructor?mode=live`로 접속
 
 ---
 
@@ -311,8 +339,8 @@ pip install -r requirements.txt
 
 ### ✅ 개발할 때
 
-- [ ] **마네킹 없음:** `frontend/.env`에서 `VITE_DATA_MODE=simulation`
-- [ ] **마네킹 있음:** `frontend/.env`에서 `VITE_DATA_MODE=websocket`
+- [ ] **마네킹 없음:** URL에서 `mode=demo` 사용
+- [ ] **마네킹 있음:** URL에서 `mode=live` 사용
 - [ ] 백엔드 실행: `python backend_server.py` (venv 활성화 필수)
 - [ ] 프론트엔드 실행: `npm run dev`
 
@@ -320,7 +348,7 @@ pip install -r requirements.txt
 
 - [ ] `.env` 파일이 Git에 올라가지 않는지 확인 (.gitignore 확인)
 - [ ] `venv/`, `node_modules/` 폴더가 Git에 올라가지 않는지 확인
-- [ ] 실제 센서 모드로 테스트했다면 `DEV_MODE = True`로 되돌리기
+- [ ] 실제 센서 모드는 `LIFEPULSE_DEV_MODE=false`, 가짜 백엔드는 `true`로 실행하기
 
 ---
 

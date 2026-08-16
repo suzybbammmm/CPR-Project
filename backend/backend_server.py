@@ -1,13 +1,61 @@
 import asyncio
-import websockets
 import json
+import math
+import os
 import random
+from dataclasses import dataclass
+from typing import Mapping
+
+import websockets
+
+
+@dataclass(frozen=True)
+class ServerConfig:
+     dev_mode: bool
+     host: str
+     port: int
+
+
+def _parse_bool(value: str, variable_name: str) -> bool:
+     normalized = value.strip().lower()
+     if normalized in {"1", "true", "yes", "on"}:
+          return True
+     if normalized in {"0", "false", "no", "off"}:
+          return False
+     raise ValueError(f"{variable_name} must be true or false")
+
+
+def load_config(environment: Mapping[str, str]) -> ServerConfig:
+     """환경변수에서 서버 설정을 읽고 잘못된 값을 즉시 거부합니다."""
+     dev_mode = _parse_bool(
+          environment.get("LIFEPULSE_DEV_MODE", "false"),
+          "LIFEPULSE_DEV_MODE"
+     )
+     host = environment.get("LIFEPULSE_HOST", "0.0.0.0").strip()
+     if not host:
+          raise ValueError("LIFEPULSE_HOST must not be empty")
+
+     try:
+          port = int(environment.get("LIFEPULSE_PORT", "8765"))
+     except ValueError as error:
+          raise ValueError("LIFEPULSE_PORT must be an integer") from error
+     if not 1 <= port <= 65535:
+          raise ValueError("LIFEPULSE_PORT must be between 1 and 65535")
+
+     return ServerConfig(dev_mode=dev_mode, host=host, port=port)
 
  # 연결된 웹 클라이언트 저장
 connected_clients = set()
 
- # 개발 모드 (True: 가짜 데이터, False: 실제 ESP32)
-DEV_MODE = False
+CONFIG = load_config(os.environ)
+DEV_MODE = CONFIG.dev_mode
+
+
+def _bounded_float(data, key, minimum, maximum, default=0.0):
+     value = float(data.get(key, default))
+     if not math.isfinite(value) or not minimum <= value <= maximum:
+          raise ValueError(f"{key} must be between {minimum} and {maximum}")
+     return value
 
 def generate_feedback(depth, bpm):
      """깊이와 BPM 기반으로 피드백 생성"""
@@ -31,11 +79,13 @@ def process_esp32_data(raw_data):
          data = json.loads(raw_data)
 
          # 필수 필드 확인 및 기본값 설정
-         depth = float(data.get("depth", 0.0))
-         accel_z = float(data.get("accel_z", 0.0))
-         gyro_z = float(data.get("gyro_z", 0.0))
-         bpm = float(data.get("bpm", 0.0))
+         depth = _bounded_float(data, "depth", 0.0, 15.0)
+         accel_z = _bounded_float(data, "accel_z", -100.0, 100.0)
+         gyro_z = _bounded_float(data, "gyro_z", -1000.0, 1000.0)
+         bpm = _bounded_float(data, "bpm", 0.0, 250.0)
          timestamp = int(data.get("timestamp", 0))
+         if timestamp < 0:
+              raise ValueError("timestamp must not be negative")
 
          # 피드백 자동 생성 (ESP32에 없으면)
          feedback = data.get("feedback", generate_feedback(depth, bpm))
@@ -146,7 +196,7 @@ async def handler(websocket):
              # ===== ESP32 센서 클라이언트 =====
              if DEV_MODE:
                  print("⚠️  개발 모드 활성화 중 - ESP32 데이터 무시됨")
-                 print("   (실제 센서 사용하려면 코드에서 DEV_MODE = False로 변경)")
+                 print("   (실제 센서 사용: LIFEPULSE_DEV_MODE=false)")
                  async for message in websocket:
                      pass  # 개발 모드에서는 ESP32 데이터 무시
              else:
@@ -195,15 +245,15 @@ async def main():
      if DEV_MODE:
          print("🔧 개발 모드: 가짜 센서 데이터 사용")
          print("   React 개발자는 마네킹 없이 테스트 가능!")
-         print("   (실제 센서 사용하려면 코드에서 DEV_MODE = False)")
+         print("   (실제 센서 사용: LIFEPULSE_DEV_MODE=false)")
      else:
          print("📡 실전 모드: ESP32 실제 센서 대기 중")
          print("   보조배터리 연결 후 마네킹 압박 필요!")
      print("=" * 60)
-     print("서버 시작! 포트 8765에서 대기 중...\n")
+     print(f"서버 시작! {CONFIG.host}:{CONFIG.port}에서 대기 중...\n")
 
      # WebSocket 서버 시작
-     async with websockets.serve(handler, "0.0.0.0", 8765):
+     async with websockets.serve(handler, CONFIG.host, CONFIG.port):
          # 개발 모드일 때만 가짜 데이터 생성 태스크 실행
          if DEV_MODE:
              asyncio.create_task(generate_fake_data())
