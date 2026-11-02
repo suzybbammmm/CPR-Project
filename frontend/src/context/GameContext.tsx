@@ -4,9 +4,9 @@ import type { VictimType } from '../utils/cprGuidance';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-export function GameContextProvider({ children, dataMode: dataModeOverride }: { children: ReactNode; dataMode?: DataMode }) {
+export function GameContextProvider({ children, dataMode: dataModeOverride, initialVictimType = 'adult' }: { children: ReactNode; dataMode?: DataMode; initialVictimType?: VictimType }) {
   const [playerCount, setPlayerCount] = useState(1);
-  const [victimType, setVictimType] = useState<VictimType>('adult');
+  const [victimType, setVictimType] = useState<VictimType>(initialVictimType);
   const [screen, setScreen] = useState<Screen>('main');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [allPlayerResults, setAllPlayerResults] = useState<PlayerResult[]>([]);

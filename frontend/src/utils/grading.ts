@@ -1,10 +1,10 @@
 import { Grade } from '../types/game.types';
 
 export function calculateGrade(score: number): Grade {
-  if (score >= 10000) return 'S';
-  if (score >= 7000) return 'A';
-  if (score >= 5000) return 'B';
-  if (score >= 3000) return 'C';
+  if (score >= 90) return 'S';
+  if (score >= 80) return 'A';
+  if (score >= 70) return 'B';
+  if (score >= 60) return 'C';
   return 'D';
 }
 

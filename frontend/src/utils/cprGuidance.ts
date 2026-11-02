@@ -12,21 +12,21 @@ export interface CprProfile {
 export const CPR_PROFILES: Record<VictimType, CprProfile> = {
   adult: {
     label: '성인',
-    description: '사춘기 이상',
+    description: '사춘기 이후',
     targetDepthCm: { min: 5, max: 6 },
     guideDepth: '5–6cm',
     handPlacement: '가슴 중앙에 양손'
   },
   child: {
     label: '소아',
-    description: '1세 ∼ 사춘기 전',
-    targetDepthCm: { min: 4.5, max: 5.5 },
-    guideDepth: '약 5cm (가슴 두께의 1/3)',
+    description: '만 1세 이상 ~ 사춘기 전',
+    targetDepthCm: { min: 4, max: 5 },
+    guideDepth: '4–5cm (가슴 두께의 1/3)',
     handPlacement: '가슴 중앙에 한 손 또는 양손'
   },
   infant: {
     label: '영아',
-    description: '1세 미만',
+    description: '만 1세 미만',
     targetDepthCm: { min: 3.5, max: 4.5 },
     guideDepth: '약 4cm (가슴 두께의 1/3)',
     handPlacement: '젊꼭지 선 아래 두 손가락'
@@ -35,6 +35,7 @@ export const CPR_PROFILES: Record<VictimType, CprProfile> = {
 
 export function getCompressionFeedback(victimType: VictimType, depthCm: number, bpm: number): { message: string; tone: FeedbackTone } {
   const { min, max } = CPR_PROFILES[victimType].targetDepthCm;
+  if (depthCm <= 0 && bpm <= 0) return { message: '압박을 시작하세요. 첫 두 번의 압박 후 속도를 측정합니다.', tone: 'caution' };
   if (depthCm < min) return { message: `압박을 더 깊게 하세요. 목표는 ${CPR_PROFILES[victimType].guideDepth}입니다.`, tone: 'caution' };
   if (depthCm > max) return { message: `압박 깊이를 조금 줄이세요. 목표는 ${CPR_PROFILES[victimType].guideDepth}입니다.`, tone: 'caution' };
   if (bpm < 100) return { message: '압박 속도를 높이세요. 분당 100–120회를 유지하세요.', tone: 'caution' };

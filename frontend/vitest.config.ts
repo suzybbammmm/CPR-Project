@@ -8,6 +8,8 @@ export default defineConfig({
         'src/config/runtime.ts',
         'src/demo/scenario.ts',
         'src/live/readings.ts',
+        'src/live/teamSession.ts',
+        'src/pages/TeamPracticeScreen.tsx',
         'src/utils/cprGuidance.ts',
         'src/components/LivePracticeMonitor.tsx',
         'src/pages/RoleLauncher.tsx',

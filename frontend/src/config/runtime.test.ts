@@ -5,40 +5,67 @@ describe('getRuntimeConfig', () => {
   it('opens the role launcher when no role path is provided', () => {
     expect(getRuntimeConfig('/', '')).toEqual({
       audience: 'launcher',
-      mode: 'demo'
+      mode: 'demo',
+      victimType: 'adult', playerCount: 1, started: false
     });
   });
 
   it('selects a self-contained participant demo from the URL', () => {
     expect(getRuntimeConfig('/participant', '?mode=demo')).toEqual({
       audience: 'participant',
-      mode: 'demo'
+      mode: 'demo', victimType: 'adult', playerCount: 1, started: false
     });
   });
 
   it('selects the real sensor path only when live is explicit', () => {
     expect(getRuntimeConfig('/participant', '?mode=live')).toEqual({
       audience: 'participant',
-      mode: 'live'
+      mode: 'live', victimType: 'adult', playerCount: 1, started: false
     });
   });
 
   it('supports an independent instructor screen and rejects unknown modes', () => {
     expect(getRuntimeConfig('/instructor/', '?mode=live')).toEqual({
       audience: 'instructor',
-      mode: 'live'
+      mode: 'live', victimType: 'adult', playerCount: 1, started: false
     });
     expect(getRuntimeConfig('/instructor', '?mode=unknown')).toEqual({
       audience: 'instructor',
-      mode: 'demo'
+      mode: 'demo', victimType: 'adult', playerCount: 1, started: false
     });
   });
 
-  it('keeps the original gameplay flow reachable', () => {
+  it('keeps the original gameplay flow reachable in demo and live modes', () => {
     expect(getRuntimeConfig('/game', '')).toEqual({
       audience: 'game',
-      mode: 'demo'
+      mode: 'demo', victimType: 'adult', playerCount: 1, started: false
     });
+    expect(getRuntimeConfig('/game', '?mode=live')).toEqual({
+      audience: 'game',
+      mode: 'live', victimType: 'adult', playerCount: 1, started: false
+    });
+  });
+
+  it('opens a dedicated technique guide with no live sensor dependency', () => {
+    expect(getRuntimeConfig('/guide', '')).toEqual({
+      audience: 'guide', mode: 'demo', victimType: 'adult', playerCount: 1, started: false
+    });
+  });
+
+  it('reads a supported victim type and falls back safely to adult', () => {
+    expect(getRuntimeConfig('/participant', '?mode=live&victim=child').victimType).toBe('child');
+    expect(getRuntimeConfig('/instructor', '?victim=infant').victimType).toBe('infant');
+    expect(getRuntimeConfig('/game', '?victim=unknown').victimType).toBe('adult');
+  });
+
+  it('reads a supported team size and falls back safely to one person', () => {
+    expect(getRuntimeConfig('/participant', '?players=3').playerCount).toBe(3);
+    expect(getRuntimeConfig('/participant', '?players=8').playerCount).toBe(1);
+  });
+
+  it('starts only when the start flag is explicit', () => {
+    expect(getRuntimeConfig('/participant', '?start=1').started).toBe(true);
+    expect(getRuntimeConfig('/participant', '?start=yes').started).toBe(false);
   });
 });
 

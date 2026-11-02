@@ -1,0 +1,112 @@
+/* Public practice leaderboard: large type for classroom displays. */
+.lb-root {
+  min-height: 100dvh;
+  padding: clamp(24px, 3vw, 48px) 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  background: radial-gradient(ellipse at 50% 22%, #eaf1ff 0, transparent 60%), #f5f7fc;
+  color: #15243e;
+  font-family: inherit;
+}
+.lb-root, .lb-root * { box-sizing: border-box; }
+.lb-root * { margin: 0; padding: 0; }
+.lb-root button { font: inherit; cursor: pointer; }
+.lb-root button:focus-visible { outline: 3px solid #2563eb; outline-offset: 4px; }
+.lb-header, .lb-brand, .lb-header-actions { display: flex; align-items: center; }
+.lb-header { justify-content: space-between; gap: 24px; }
+.lb-brand { gap: 16px; }
+.lb-brand > svg { width: 60px; height: 60px; padding: 13px; color: #fff; background: #2563eb; border-radius: 18px; box-shadow: 0 6px 16px #2563eb26; }
+.lb-brand h1 { font-size: clamp(28px, 2.8vw, 40px); letter-spacing: -1.5px; font-weight: 850; line-height: 1.2; }
+.lb-brand p { margin-top: 8px; font-size: 20px; color: #596981; }
+.lb-header-actions { gap: 10px; flex-wrap: wrap; }
+.lb-refresh { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 18px; border: 1px solid #d4deed; border-radius: 14px; background: #fff; color: #354967; font-size: 20px; font-weight: 700 !important; transition: background .15s; }
+.lb-refresh:hover:not(:disabled) { background: #eaf1ff; border-color: #97b9ef; }
+.lb-refresh[aria-pressed=true] { background: #e4edff; color: #1d4ed8; border-color: #97b9ef; }
+.lb-refresh:disabled { opacity: .55; cursor: wait; }
+.lb-refresh:disabled svg { animation: lb-spin 1s linear infinite; }
+@keyframes lb-spin { to { transform: rotate(360deg); } }
+.lb-event-badge { display: inline-block; padding: 4px 10px; margin-left: 10px; border-radius: 20px; font-size: 18px; font-weight: 750; }
+.lb-event-active { background: #dcfce7; color: #166534; }
+.lb-event-ended { background: #e2e8f0; color: #475569; }
+.lb-stats { display: flex; gap: 0; padding: 20px 28px; border: 1px solid #e1e8f3; border-radius: 20px; background: #ffffffd9; }
+.lb-stats > div { display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; gap: 24px; flex: 1; padding-right: 32px; }
+.lb-stats > div + div { border-left: 1px solid #dfe6f1; padding-left: 32px; padding-right: 0; }
+.lb-stats strong { font-size: clamp(32px, 3vw, 44px); font-weight: 850; color: #1d4ed8; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.lb-stats span { font-size: 22px; font-weight: 650; color: #4b5f7d; }
+.lb-section-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 28px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 28px; }
+.lb-section-title > svg { color: #b77910; }
+.lb-section-title > span { margin-left: 4px; font-size: 20px; color: #61728c; font-weight: 500; letter-spacing: 0; }
+.lb-podium-stage { display: flex; align-items: flex-end; justify-content: center; gap: 22px; padding: 16px 0 0; }
+.lb-podium-slot { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 350px; min-width: 0; }
+.lb-podium-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; padding: 30px 20px 24px; text-align: center; background: #fff; border: 1px solid #d5dfed; border-radius: 24px; box-shadow: 0 8px 24px #19345c09; }
+.lb-podium-slot.rank-1 .lb-podium-card { padding-top: 38px; padding-bottom: 32px; background: linear-gradient(155deg, #fffdf3, #fff); border: 2px solid #e4b743; box-shadow: 0 12px 36px #b68d1920; }
+.lb-rank-badge { position: absolute; top: -17px; padding: 6px 20px; border-radius: 24px; font-size: 21px; line-height: 1.2; font-weight: 850; color: #425674; background: #e6edf7; border: 3px solid #f5f7fc; white-space: nowrap; }
+.rank-1 .lb-rank-badge { color: #62400a; background: #f6d36d; }
+.rank-3 .lb-rank-badge { color: #794a27; background: #f3dfcc; }
+.lb-podium-card > svg { width: 30px; height: 30px; color: #7286a2; margin: 4px 0; }
+.rank-1 .lb-podium-card > svg { color: #bd8617; width: 36px; height: 36px; }
+.rank-3 .lb-podium-card > svg { color: #ac7549; }
+.lb-card-name { font-size: clamp(23px, 2vw, 30px); font-weight: 800; }
+.lb-card-sn { font-size: 20px; color: #687a94; font-variant-numeric: tabular-nums; }
+.lb-card-score { margin: 6px 0; font-size: clamp(48px, 5vw, 72px); line-height: 1.1; font-weight: 850; color: #2357d8; letter-spacing: -3px; font-variant-numeric: tabular-nums; }
+.rank-1 .lb-card-score { color: #a66b0c; }
+.lb-card-score small { font-size: 26px; font-weight: 650; color: #65758d; letter-spacing: 0; margin-left: 5px; }
+.lb-card-grade { font-size: 21px; font-weight: 750; padding: 7px 14px; background: #f0f5fe; border-radius: 10px; color: #385780; }
+.rank-1 .lb-card-grade { background: #fff3cd; color: #81590e; }
+.lb-card-meta { font-size: 20px; color: #677991; margin-top: 3px; }
+.lb-podium-base { width: 88%; border-radius: 0 0 16px 16px; border: 1px solid #d9e3f1; border-top: 0; }
+.rank-1 .lb-podium-base { height: 72px; background: linear-gradient(#f7e6b4, #fcf6e5); border-color: #ebd8a0; }
+.rank-2 .lb-podium-base { height: 42px; background: linear-gradient(#dfe7f3, #edf2fa); }
+.rank-3 .lb-podium-base { height: 24px; background: linear-gradient(#efdfd1, #f8eee5); border-color: #ead9ca; }
+.lb-list { flex: 1; min-width: 0; }
+.lb-list .lb-section-title { margin-bottom: 16px; }
+.lb-table-wrapper { overflow-x: auto; border: 1px solid #dce4f0; border-radius: 20px; box-shadow: 0 4px 20px #19345c05; }
+.lb-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 22px; text-align: left; }
+.lb-table th { padding: 16px 24px; font-size: 20px; color: #536783; font-weight: 750; background: #edf2fa; white-space: nowrap; }
+.lb-table td { padding: 18px 24px; border-top: 1px solid #edf1f7; color: #536783; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lb-table tbody tr:hover { background: #f5f8ff; }
+.lb-table .lb-col-rank { font-size: 26px; font-weight: 800; color: #6b7e9b; width: 90px; }
+.lb-table .lb-col-name { font-size: 24px; font-weight: 750; color: #1b2d48; }
+.lb-table .lb-col-sn { font-size: 20px; color: #6b7e97; }
+.lb-col-score strong { font-size: 32px; color: #2357d8; margin-right: 4px; font-weight: 850; }
+.lb-col-grade { font-size: 25px; font-weight: 800; }
+.lb-error { padding: 18px; border: 1px solid #f3b6b6; border-radius: 16px; background: #fff1f1; color: #a52525; font-size: 20px; }
+.lb-empty { text-align: center; padding: 72px 24px; background: #fff; border: 1px dashed #c7d5e8; border-radius: 24px; color: #536783; font-size: 24px; }
+.lb-footer { text-align: center; padding: 20px 0 4px; border-top: 1px solid #dce4f0; color: #687a94; font-size: 20px; line-height: 1.6; }
+@media (max-width: 760px) {
+  .lb-root { padding: 24px 14px; gap: 28px; }
+  .lb-header { align-items: flex-start; flex-direction: column; gap: 20px; }
+  .lb-header-actions { width: 100%; }
+  .lb-refresh { flex: 1; font-size: 18px !important; padding: 12px; }
+  .lb-stats { padding: 18px; }
+  .lb-stats > div { flex-direction: column-reverse; align-items: flex-start; gap: 8px; padding-right: 18px; }
+  .lb-stats > div + div { padding-left: 18px; }
+  .lb-stats span { font-size: 19px; }
+  .lb-section-title { font-size: 24px; }
+  .lb-section-title > span { width: 100%; margin-left: 0; font-size: 18px; }
+  .lb-podium-stage { gap: 8px; }
+  .lb-podium-card { padding: 26px 6px 18px; border-radius: 16px; gap: 7px; }
+  .lb-podium-slot.rank-1 .lb-podium-card { padding: 32px 6px 24px; }
+  .lb-rank-badge { font-size: 17px; padding: 6px 12px; }
+  .lb-card-name { font-size: 22px; }
+  .lb-card-sn { font-size: 16px; }
+  .lb-card-score { font-size: clamp(32px, 8.5vw, 48px); letter-spacing: -2px; }
+  .lb-card-score small { font-size: 18px; margin-left: 2px; }
+  .lb-card-grade { font-size: 16px; padding: 6px 5px; }
+  .lb-card-meta { font-size: 16px; }
+  .lb-table th, .lb-table td { padding: 14px 16px; }
+  .lb-table { min-width: 720px; }
+  .lb-footer { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { .lb-refresh:disabled svg { animation: none; } }
+
+.lb-table-wrapper:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+@media (max-width: 360px) {
+  .lb-podium-stage { flex-direction: column; align-items: stretch; gap: 32px; }
+  .lb-podium-slot { max-width: none; width: 100%; }
+  .lb-podium-slot.rank-1 { order: -1; }
+  .lb-podium-base { display: none; }
+  .lb-card-grade { font-size: 18px; }
+  .lb-card-meta, .lb-card-sn { font-size: 17px; }
+}

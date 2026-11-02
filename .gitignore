@@ -68,3 +68,6 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+
+# ESP32 Wi-Fi credentials and local server address
+firmware/lifepulse_esp32/secrets.h

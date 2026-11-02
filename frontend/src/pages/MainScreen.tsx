@@ -34,7 +34,7 @@ export function MainScreen() {
         <p className="text-xl text-white/60 font-body">
           심폐소생술 시뮬레이션 트레이닝
         </p>
-        <p className="text-sm text-neon-cyan/60 mt-2">
+        <p className="text-base text-neon-cyan/60 mt-2">
           모드: {dataMode === 'websocket' ? 'WebSocket (실제 센서)' : '시뮬레이션'}
         </p>
       </motion.div>
@@ -63,13 +63,13 @@ export function MainScreen() {
                 style={{ boxShadow: selected ? '0 0 24px rgba(0,255,136,0.22)' : undefined }}
               >
                 <p className="font-heading text-xl text-white">{profile.label}</p>
-                <p className="mt-1 text-xs text-white/50">{profile.description}</p>
-                <p className="mt-2 text-sm font-semibold text-neon-green">{profile.guideDepth}</p>
+                <p className="mt-1 text-sm text-white/50">{profile.description}</p>
+                <p className="mt-2 text-base font-semibold text-neon-green">{profile.guideDepth}</p>
               </motion.button>
             );
           })}
         </div>
-        <p className="mt-3 text-center text-xs text-white/40">교육용 가이드 · 실제 상황에서는 정식 심폐소생술 교육을 따르세요.</p>
+        <p className="mt-3 text-center text-sm text-white/40">교육용 가이드 · 실제 상황에서는 정식 심폐소생술 교육을 따르세요.</p>
       </motion.div>
 
       {/* Player Selection */}
@@ -103,7 +103,7 @@ export function MainScreen() {
               }}
             >
               <p className="text-5xl font-heading text-white mb-2">{count}</p>
-              <p className="text-sm text-white/50 font-body">
+              <p className="text-base text-white/50 font-body">
                 {count === 1 ? '싱글' : '멀티'}
               </p>
             </motion.button>
@@ -141,7 +141,7 @@ export function MainScreen() {
         transition={{ duration: 0.6, delay: 0.7 }}
         className="absolute bottom-8 text-center"
       >
-        <p className="text-sm text-white/40 font-body">
+        <p className="text-base text-white/40 font-body">
           각 플레이어는 2분 동안 CPR을 수행합니다
         </p>
       </motion.div>

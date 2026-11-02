@@ -5,8 +5,16 @@ export type Screen = 'main' | 'playing' | 'handoff' | 'final-results';
 export type Grade = 'S' | 'A' | 'B' | 'C' | 'D';
 
 export interface WebSocketMessage {
+  type?: 'reading';
+  device_id?: string;
+  sequence?: number;
   depth: number;
+  compression_peak_cm?: number;
+  compression_count?: number;
+  recoil_percent?: number | null;
+  compression_bpm?: number | null;
   accel_z: number;
+  gyro_z?: number;
   bpm: number;
   timestamp: number;
 }
@@ -28,6 +36,7 @@ export interface PlayerResult {
   maxCombo: number;
   victimType: VictimType;
   dataHistory: DataPoint[];
+  compressionPeaks: DataPoint[];
 }
 
 export interface GameContextType {

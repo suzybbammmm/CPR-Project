@@ -8,11 +8,12 @@ import {
 describe('CPR guidance profiles', () => {
   it('uses different training targets for adult, child, and infant victims', () => {
     expect(CPR_PROFILES.adult.targetDepthCm).toEqual({ min: 5, max: 6 });
-    expect(CPR_PROFILES.child.targetDepthCm).toEqual({ min: 4.5, max: 5.5 });
+    expect(CPR_PROFILES.child.targetDepthCm).toEqual({ min: 4, max: 5 });
     expect(CPR_PROFILES.infant.targetDepthCm).toEqual({ min: 3.5, max: 4.5 });
   });
 
   it('gives depth feedback against the selected victim target', () => {
+    expect(getCompressionFeedback('adult', 0, 0).message).toContain('압박을 시작');
     expect(getCompressionFeedback('adult', 4.4, 110).message).toContain('더 깊게');
     expect(getCompressionFeedback('infant', 5.1, 110).message).toContain('조금 줄이');
     expect(getCompressionFeedback('adult', 5.5, 90).message).toContain('속도를 높이');

@@ -26,6 +26,21 @@ describe('gallery demo scenario', () => {
     expect(getParticipantReading(12_000)).toEqual(getParticipantReading(12_000));
   });
 
+  it('updates depth and rate on every 300ms demo tick', () => {
+    const first = getParticipantReading(0);
+    const next = getParticipantReading(300);
+    const later = getParticipantReading(1_500);
+
+    expect(next.depthCm).not.toBe(first.depthCm);
+    expect(next.rate).not.toBe(first.rate);
+    expect(Math.abs(next.depthCm - first.depthCm)).toBeLessThanOrEqual(0.2);
+    expect(Math.abs(next.rate - first.rate)).toBeLessThanOrEqual(3);
+    expect(Math.abs(later.depthCm - first.depthCm)).toBeGreaterThanOrEqual(0.4);
+    expect(Math.abs(later.rate - first.rate)).toBeGreaterThanOrEqual(7);
+    expect(next.depthCm).toBeGreaterThan(5);
+    expect(next.depthCm).toBeLessThan(6);
+  });
+
   it('keeps the compression count increasing across cycles for four hours', () => {
     expect(getParticipantReading(72_000).compressionCount)
       .toBeGreaterThanOrEqual(getParticipantReading(71_999).compressionCount);

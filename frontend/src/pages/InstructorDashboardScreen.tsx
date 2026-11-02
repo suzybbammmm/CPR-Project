@@ -16,6 +16,7 @@ import {
 import { ModeBadge } from '../components/showcase/ModeBadge';
 import { RuntimeMode } from '../config/runtime';
 import { DemoLearner, DemoSession, MonitoringStatus } from '../demo/scenario';
+import { LiveCoachFeedback } from '../utils/cprCoach';
 
 interface InstructorDashboardScreenProps {
   mode: RuntimeMode;
@@ -23,6 +24,7 @@ interface InstructorDashboardScreenProps {
   selectedLearnerId: string;
   onSelectLearner: (learnerId: string) => void;
   connected?: boolean;
+  coach?: LiveCoachFeedback;
 }
 
 const STATUS_META: Record<MonitoringStatus, { label: string; dot: string; card: string; text: string }> = {
@@ -40,7 +42,8 @@ function ScoreRing({ learner }: { learner: DemoLearner }) {
   );
 }
 
-function LearnerCard({ learner, selected, onSelect }: { learner: DemoLearner; selected: boolean; onSelect: () => void }) {
+function LearnerCard({ learner, selected, onSelect, showRecoil }: { learner: DemoLearner; selected: boolean; onSelect: () => void; showRecoil: boolean }) {
+  const recoil = showRecoil ? learner.metrics.recoil : null;
   const meta = STATUS_META[learner.status];
   return (
     <button onClick={onSelect} className={`rounded-2xl border p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${selected ? 'ring-2 ring-teal-500' : ''} ${meta.card}`} aria-label={`${learner.name} 상세 수행 지표 보기`}>
@@ -53,24 +56,24 @@ function LearnerCard({ learner, selected, onSelect }: { learner: DemoLearner; se
         <div className="space-y-1 text-right text-xs text-slate-500">
           <p><strong className="text-slate-700">{learner.metrics.depthMm.toFixed(1)}</strong> mm</p>
           <p><strong className="text-slate-700">{learner.metrics.rate}</strong> 회/분</p>
-          <p><strong className="text-slate-700">{learner.metrics.recoil ?? '—'}</strong>{learner.metrics.recoil === null ? ' 이완 미수집' : '% 이완'}</p>
+          <p><strong className="text-slate-700">{recoil ?? '—'}</strong>{recoil == null ? ' 측정 대기' : '% 이완 복귀율'}</p>
         </div>
       </div>
     </button>
   );
 }
 
-function DetailMetric({ icon, label, value, target }: { icon: React.ReactNode; label: string; value: string; target: string }) {
+function DetailMetric({ icon, label, value, target, reference = false }: { icon: React.ReactNode; label: string; value: string; target: string; reference?: boolean }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3">
       <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-500">{icon}{label}</div>
       <p className="text-2xl font-black tabular-nums text-slate-800">{value}</p>
-      <p className="mt-1 text-[11px] text-slate-400">권장 {target}</p>
+      <p className="mt-1 text-[11px] text-slate-400">{reference ? target : `권장 ${target}`}</p>
     </div>
   );
 }
 
-export function InstructorDashboardScreen({ mode, session, selectedLearnerId, onSelectLearner, connected = true }: InstructorDashboardScreenProps) {
+export function InstructorDashboardScreen({ mode, session, selectedLearnerId, onSelectLearner, connected = true, coach }: InstructorDashboardScreenProps) {
   const selected = session.learners.find((learner) => learner.id === selectedLearnerId) ?? session.learners[0];
   const counts = session.learners.reduce((acc, learner) => ({ ...acc, [learner.status]: acc[learner.status] + 1 }), { normal: 0, caution: 0, urgent: 0 });
 
@@ -107,7 +110,7 @@ export function InstructorDashboardScreen({ mode, session, selectedLearnerId, on
                 <h2 className="flex items-center gap-2 font-black text-slate-800"><ActivityIcon className="h-5 w-5 text-teal-600" />실시간 수행 현황 <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[11px] text-teal-700">LIVE</span></h2>
                 <div className="flex gap-2 text-xs font-bold"><span className="rounded-full bg-teal-50 px-2.5 py-1 text-teal-700">정상 {counts.normal}</span><span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700">주의 {counts.caution}</span><span className="rounded-full bg-red-50 px-2.5 py-1 text-red-700">긴급 {counts.urgent}</span></div>
               </div>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{session.learners.map((learner) => <LearnerCard key={learner.id} learner={learner} selected={learner.id === selected.id} onSelect={() => onSelectLearner(learner.id)} />)}</div>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{session.learners.map((learner) => <LearnerCard key={learner.id} learner={learner} selected={learner.id === selected.id} onSelect={() => onSelectLearner(learner.id)} showRecoil={mode !== 'live' || connected} />)}</div>
             </section>
 
             <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
@@ -132,10 +135,17 @@ export function InstructorDashboardScreen({ mode, session, selectedLearnerId, on
             <div className="grid grid-cols-2 gap-3">
               <DetailMetric icon={<ArrowDownToLineIcon className="h-4 w-4" />} label="가슴 압박 깊이" value={`${selected.metrics.depthMm.toFixed(1)} mm`} target="50–60mm" />
               <DetailMetric icon={<GaugeIcon className="h-4 w-4" />} label="분당 압박 횟수" value={`${selected.metrics.rate}회`} target="100–120회" />
-              <DetailMetric icon={<RefreshCwIcon className="h-4 w-4" />} label="압박 이완 비율" value={selected.metrics.recoil === null ? '—' : `${selected.metrics.recoil}%`} target="90% 이상" />
+              <DetailMetric icon={<RefreshCwIcon className="h-4 w-4" />} label="이완 복귀율" value={(mode === 'live' && !connected) || selected.metrics.recoil == null ? '—' : `${selected.metrics.recoil}%`} target="변위 기준 참고값 · 직전 압박의 변위 복귀" reference />
               <DetailMetric icon={<ZapIcon className="h-4 w-4" />} label="AED 사용 여부" value={selected.metrics.aedUsed ? '사용함' : '미사용'} target="시나리오 단계 준수" />
             </div>
-            <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500"><p className="mb-1 flex items-center gap-1 font-bold text-slate-700"><CheckCircle2Icon className="h-4 w-4 text-teal-600" />권장 범위 안내</p>깊이 50–60mm · 속도 100–120회/분 · 이완 90% 이상</div>
+            {coach && <section className={`mt-4 rounded-xl border p-3 text-xs leading-5 ${coach.severity === 'good' ? 'border-teal-200 bg-teal-50 text-teal-800' : coach.severity === 'offline' ? 'border-red-200 bg-red-50 text-red-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
+              <p className="font-black">AI CPR 코치 · {coach.title}</p>
+              <p className="mt-1 font-bold">{coach.action}</p>
+              <p className="mt-1">{coach.rationale}</p>
+              <p className="mt-1 text-[11px] opacity-80">판단 근거: {coach.criterion}</p>
+              <p className="mt-1 text-[11px] opacity-80">복귀율은 변위 기준 · 손 압력·손 위치·환기 품질 미측정</p>
+            </section>}
+            <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500"><p className="mb-1 flex items-center gap-1 font-bold text-slate-700"><CheckCircle2Icon className="h-4 w-4 text-teal-600" />권장 범위 안내</p>{coach?.criterion ?? '깊이 50–60mm · 속도 100–120회/분'}<br />복귀율은 변위 기준 · 손 압력·손 위치·환기 품질 미측정</div>
           </aside>
         </div>
       </div>

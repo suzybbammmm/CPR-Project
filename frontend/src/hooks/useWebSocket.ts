@@ -1,14 +1,19 @@
-import { useEffect, useState } from 'react';
-import { WebSocketMessage } from '../types/game.types';
+import { useEffect, useMemo, useState } from 'react';
+import { SensorReading, isFreshSensorReading, normalizeSensorReading } from '../live/sensorState';
 
 export function useWebSocket(url: string) {
-  const [data, setData] = useState<WebSocketMessage | null>(null);
+  const [data, setData] = useState<SensorReading | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [sensorOnline, setSensorOnline] = useState(false);
+  const [lastReceivedAt, setLastReceivedAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (!url) {
       setData(null);
       setIsConnected(false);
+      setSensorOnline(false);
+      setLastReceivedAt(null);
       return;
     }
 
@@ -31,7 +36,17 @@ export function useWebSocket(url: string) {
         socket.onmessage = (event) => {
           if (disposed) return;
           try {
-            setData(JSON.parse(event.data) as WebSocketMessage);
+            const message = JSON.parse(event.data) as Record<string, unknown>;
+            if (message.type === 'status') {
+              setSensorOnline(message.sensor_online === true);
+              return;
+            }
+            const reading = normalizeSensorReading(message);
+            if (reading) {
+              setData(reading);
+              setLastReceivedAt(Date.now());
+              setSensorOnline(true);
+            }
           } catch (error) {
             console.error('Failed to parse WebSocket message:', error);
           }
@@ -41,6 +56,7 @@ export function useWebSocket(url: string) {
           if (!disposed) {
             setData(null);
             setIsConnected(false);
+            setSensorOnline(false);
           }
         };
 
@@ -48,6 +64,7 @@ export function useWebSocket(url: string) {
           if (disposed) return;
           setData(null);
           setIsConnected(false);
+          setSensorOnline(false);
           reconnectTimer = setTimeout(connect, 3000);
         };
       } catch (error) {
@@ -65,5 +82,15 @@ export function useWebSocket(url: string) {
     };
   }, [url]);
 
-  return { data, isConnected };
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const hasFreshReading = useMemo(
+    () => isFreshSensorReading(lastReceivedAt, now),
+    [lastReceivedAt, now]
+  );
+
+  return { data, isConnected, sensorOnline: sensorOnline && hasFreshReading, lastReceivedAt };
 }

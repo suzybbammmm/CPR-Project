@@ -14,6 +14,8 @@ import {
 import { useGameContext } from '../context/GameContext';
 import { PlayerResultCard } from '../components/PlayerResultCard';
 import { DataPoint } from '../types/game.types';
+import { AiSessionAnalysis } from '../components/AiSessionAnalysis';
+import { CPR_PROFILES } from '../utils/cprGuidance';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -39,11 +41,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 interface PlayerChartsProps {
   playerNumber: number;
   dataHistory: DataPoint[];
+  victimType: keyof typeof CPR_PROFILES;
   isExpanded: boolean;
   onToggle: () => void;
 }
 
-function PlayerCharts({ playerNumber, dataHistory, isExpanded, onToggle }: PlayerChartsProps) {
+function PlayerCharts({ playerNumber, dataHistory, victimType, isExpanded, onToggle }: PlayerChartsProps) {
+  const profile = CPR_PROFILES[victimType];
   // Sample data for cleaner charts (every 10th point)
   const sampledData = dataHistory.filter((_, index) => index % 10 === 0);
 
@@ -95,7 +99,7 @@ function PlayerCharts({ playerNumber, dataHistory, isExpanded, onToggle }: Playe
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
                 <span className="text-slate-500 text-sm font-body">
-                  적정 구간 (5-6cm)
+                  적정 구간 ({profile.guideDepth})
                 </span>
               </div>
             </div>
@@ -122,7 +126,7 @@ function PlayerCharts({ playerNumber, dataHistory, isExpanded, onToggle }: Playe
                     tickLine={false}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <ReferenceArea y1={5} y2={6} fill="#34D399" fillOpacity={0.2} />
+                  <ReferenceArea y1={profile.targetDepthCm.min} y2={profile.targetDepthCm.max} fill="#34D399" fillOpacity={0.2} />
                   <Line
                     type="monotone"
                     dataKey="depth"
@@ -231,6 +235,7 @@ export function MultiplayerResultScreen() {
               <PlayerCharts
                 playerNumber={result.playerNumber}
                 dataHistory={result.dataHistory}
+                victimType={result.victimType}
                 isExpanded={expandedPlayer === result.playerNumber}
                 onToggle={() =>
                   setExpandedPlayer(
@@ -239,6 +244,7 @@ export function MultiplayerResultScreen() {
                 }
               />
             </div>
+            <AiSessionAnalysis result={result} />
           </div>
         ))}
       </div>

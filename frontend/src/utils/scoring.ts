@@ -26,10 +26,8 @@ export function calculatePoints(
   const target = depthWindow(victimType);
   // Perfect: 5-6cm AND 100-120 BPM
   if (depth >= target.min && depth <= target.max && bpm >= 100 && bpm <= 120) {
-    const basePoints = 10;
-    const comboBonus = currentCombo * 2;
     return {
-      points: basePoints + comboBonus,
+      points: 2,
       newCombo: currentCombo + 1
     };
   }
@@ -39,12 +37,9 @@ export function calculatePoints(
   const bpmGood = bpm >= 85 && bpm <= 135;
 
   if (depthGood && bpmGood) {
-    // Good compression - reduced points but keeps combo
-    const basePoints = 5;
-    const comboBonus = Math.floor(currentCombo * 1);
     return {
-      points: basePoints + comboBonus,
-      newCombo: currentCombo + 1
+      points: 1,
+      newCombo: 0
     };
   }
 
@@ -54,10 +49,7 @@ export function calculatePoints(
 
   if (depthAcceptable || bpmAcceptable) {
     // Acceptable compression - minimal points, combo resets
-    return {
-      points: 2,
-      newCombo: 0
-    };
+    return { points: 0, newCombo: 0 };
   }
 
   // Poor compression - no points, combo resets

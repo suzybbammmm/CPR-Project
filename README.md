@@ -39,8 +39,12 @@ cd frontend
 npm run dev:host
 ```
 
-- 실제 시행자 화면: `http://localhost:5173/participant?mode=live`
-- 실제 강사 화면: `http://localhost:5173/instructor?mode=live`
+- 실제 시행자 화면: `http://localhost:5173/participant?mode=live&victim=adult`
+- 실제 강사 화면: `http://localhost:5173/instructor?mode=live&victim=adult`
+- 실제 게임 시연: `http://localhost:5173/game?mode=live&victim=adult`
+- 대상별 손 위치·자세 안내: `http://localhost:5173/guide`
+
+`victim`은 `adult`(기본값), `child`, `infant`를 지원합니다. 게임·시행자·강사 화면은 모두 같은 근거 기반 AI 코치 문구와 기준을 사용합니다. AI 코치는 깊이·속도만 분석하며 이완·손 위치·환기 품질은 현재 센서로 측정하지 않습니다.
 
 현재 ESP32 메시지는 단일 센서 스트림이므로 실제 강사 화면에서는 스테이션 A 한 명을 표시합니다. 8명 동시 화면은 장비 없는 시연 모드에서 확인할 수 있습니다.
 

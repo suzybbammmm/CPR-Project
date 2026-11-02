@@ -4,7 +4,7 @@ import math
 import os
 import random
 from dataclasses import dataclass
-from typing import Mapping
+from typing import Any, Mapping
 
 import websockets
 
@@ -46,6 +46,9 @@ def load_config(environment: Mapping[str, str]) -> ServerConfig:
 
  # 연결된 웹 클라이언트 저장
 connected_clients = set()
+last_sensor_reading: dict[str, Any] | None = None
+last_sensor_received_at: float | None = None
+active_sensor_connections = 0
 
 CONFIG = load_config(os.environ)
 DEV_MODE = CONFIG.dev_mode
@@ -56,6 +59,18 @@ def _bounded_float(data, key, minimum, maximum, default=0.0):
      if not math.isfinite(value) or not minimum <= value <= maximum:
           raise ValueError(f"{key} must be between {minimum} and {maximum}")
      return value
+
+
+def _non_negative_int(data: Mapping[str, Any], key: str, default: int = 0) -> int:
+     value = int(data.get(key, default))
+     if value < 0:
+          raise ValueError(f"{key} must not be negative")
+     return value
+
+
+def is_sensor_payload(data: Mapping[str, Any]) -> bool:
+     """True for both the versioned ESP32 protocol and the legacy sensor frame."""
+     return data.get("type") in {"sensor", "reading"} or "depth" in data or "bpm" in data
 
 def generate_feedback(depth, bpm):
      """깊이와 BPM 기반으로 피드백 생성"""
@@ -83,22 +98,44 @@ def process_esp32_data(raw_data):
          accel_z = _bounded_float(data, "accel_z", -100.0, 100.0)
          gyro_z = _bounded_float(data, "gyro_z", -1000.0, 1000.0)
          bpm = _bounded_float(data, "bpm", 0.0, 250.0)
-         timestamp = int(data.get("timestamp", 0))
-         if timestamp < 0:
-              raise ValueError("timestamp must not be negative")
+         timestamp = _non_negative_int(data, "timestamp")
+         sequence = _non_negative_int(data, "sequence")
+         compression_count = _non_negative_int(data, "compression_count")
+         compression_peak_cm = _bounded_float(
+             data, "compression_peak_cm", 0.0, 15.0, default=depth
+         )
+         device_id = str(data.get("device_id", "manikin-01")).strip()
+         if not device_id:
+              raise ValueError("device_id must not be empty")
 
          # 피드백 자동 생성 (ESP32에 없으면)
          feedback = data.get("feedback", generate_feedback(depth, bpm))
 
          # 검증된 데이터 재구성
          processed_data = {
+             "type": "reading",
+             "schema_version": 1,
+             "device_id": device_id,
+             "sequence": sequence,
              "depth": round(depth, 2),
+             "compression_peak_cm": round(compression_peak_cm, 2),
+             "compression_count": compression_count,
              "accel_z": round(accel_z, 2),
              "gyro_z": round(gyro_z, 3),
              "bpm": round(bpm, 1),
              "timestamp": timestamp,
              "feedback": feedback
          }
+
+         for key, maximum in (("recoil_percent", 100.0), ("compression_bpm", 250.0), ("residual_depth_cm", 15.0)):
+             if key in data:
+                 value = data[key]
+                 if value is None:
+                     processed_data[key] = None
+                 elif isinstance(value, bool) or not isinstance(value, (int, float)):
+                     raise ValueError(f"{key} must be a number or null")
+                 else:
+                     processed_data[key] = round(_bounded_float(data, key, 0.0, maximum), 2)
 
          return json.dumps(processed_data)
 
@@ -168,59 +205,72 @@ async def generate_fake_data():
 
          await asyncio.sleep(0.05)  # 20Hz
 
+async def broadcast(message: str):
+     """Send to web clients and prune connections that have died."""
+     if not connected_clients:
+          return
+     clients = tuple(connected_clients)
+     results = await asyncio.gather(
+          *[client.send(message) for client in clients],
+          return_exceptions=True
+     )
+     for client, result in zip(clients, results):
+          if isinstance(result, Exception):
+               connected_clients.discard(client)
+
+
+def has_fresh_sensor_reading(now: float) -> bool:
+     return (active_sensor_connections > 0 and last_sensor_received_at is not None
+             and 0 <= now - last_sensor_received_at < 1.0)
+
+
+async def broadcast_status():
+     sensor_online = has_fresh_sensor_reading(asyncio.get_running_loop().time())
+     await broadcast(json.dumps({
+          "type": "status",
+          "sensor_online": sensor_online,
+          "last_sensor_received_at": int((last_sensor_received_at or 0) * 1000),
+     }))
+
+
+async def process_sensor_message(message: str):
+     global last_sensor_reading, last_sensor_received_at
+     processed_message = process_esp32_data(message)
+     if not processed_message:
+          print("⚠️  데이터 처리 실패 - 전송 건너뜀")
+          return
+     last_sensor_reading = json.loads(processed_message)
+     last_sensor_received_at = asyncio.get_running_loop().time()
+     last_sensor_reading["server_received_at"] = int(last_sensor_received_at * 1000)
+     await broadcast(json.dumps(last_sensor_reading))
+
+
 async def handler(websocket):
      """클라이언트 연결 핸들러"""
      client_type = None
 
+     global active_sensor_connections
      try:
-         # 첫 메시지로 클라이언트 타입 확인
-         first_message = await websocket.recv()
-         data = json.loads(first_message)
+         async for message in websocket:
+             data = json.loads(message)
+             if client_type is None and data.get("type") == "web":
+                 client_type = "web"
+                 connected_clients.add(websocket)
+                 print(f"✅ React 클라이언트 연결! (총 {len(connected_clients)}개)")
+                 await broadcast_status()
+                 if last_sensor_reading and has_fresh_sensor_reading(asyncio.get_running_loop().time()):
+                     await websocket.send(json.dumps(last_sensor_reading))
+                 continue
 
-         if "type" in data and data["type"] == "web":
-             # ===== React 웹 클라이언트 =====
-             client_type = "web"
-             connected_clients.add(websocket)
-             print(f"✅ React 클라이언트 연결! (총 {len(connected_clients)}개)")
-
-             if DEV_MODE:
-                 print("   🔧 개발 모드: 가짜 데이터 수신 중...")
-             else:
-                 print("   📡 실전 모드: ESP32 데이터 대기 중...")
-
-             # 연결 유지 (React는 데이터 수신만)
-             async for message in websocket:
-                 pass  # React에서 보내는 메시지는 무시
-
-         else:
-             # ===== ESP32 센서 클라이언트 =====
-             if DEV_MODE:
-                 print("⚠️  개발 모드 활성화 중 - ESP32 데이터 무시됨")
-                 print("   (실제 센서 사용: LIFEPULSE_DEV_MODE=false)")
-                 async for message in websocket:
-                     pass  # 개발 모드에서는 ESP32 데이터 무시
-             else:
+             if client_type is None and is_sensor_payload(data):
                  client_type = "esp32"
+                 active_sensor_connections += 1
                  print("📡 ESP32 연결됨!")
+                 await broadcast_status()
 
-                 # ESP32 데이터를 모든 웹 클라이언트에게 전달
-                 async for message in websocket:
-                     print(f"📥 ESP32 원본: {message}")
-
-                     # 데이터 처리 및 검증
-                     processed_message = process_esp32_data(message)
-
-                     if processed_message and connected_clients:
-                         print(f"📤 처리 후 전송: {processed_message}")
-
-                         # 모든 웹 클라이언트에게 전송
-                         await asyncio.gather(
-                             *[client.send(processed_message) for client in
-  connected_clients],
-                             return_exceptions=True
-                         )
-                     elif not processed_message:
-                         print("⚠️  데이터 처리 실패 - 전송 건너뜀")
+             if client_type == "esp32" and data.get("type") != "sensor" and not DEV_MODE:
+                 # This handles the very first untyped legacy frame too.
+                 await process_sensor_message(message)
 
      except websockets.exceptions.ConnectionClosed:
          pass  # 정상 종료
@@ -237,6 +287,8 @@ async def handler(websocket):
              connected_clients.remove(websocket)
              print(f"React 연결 종료 (남은 개수: {len(connected_clients)})")
          elif client_type == "esp32":
+             active_sensor_connections = max(0, active_sensor_connections - 1)
+             await broadcast_status()
              print("ESP32 연결 종료")
 
 async def main():
@@ -251,6 +303,18 @@ async def main():
          print("   보조배터리 연결 후 마네킹 압박 필요!")
      print("=" * 60)
      print(f"서버 시작! {CONFIG.host}:{CONFIG.port}에서 대기 중...\n")
+
+     # REST API 서버 시작 (포트 8766)
+     try:
+         from api_server import start_api_server, set_sensor_state
+         set_sensor_state({
+             "connected": active_sensor_connections > 0,
+             "last_received_at": last_sensor_received_at,
+         })
+         asyncio.create_task(start_api_server())
+         print(f"REST API 서버 시작 중 (포트 {os.environ.get('LIFEPULSE_API_PORT', '8766')})")
+     except ImportError as e:
+         print(f"⚠️  REST API 서버를 시작하지 못했습니다 (aiohttp 미설치?): {e}")
 
      # WebSocket 서버 시작
      async with websockets.serve(handler, CONFIG.host, CONFIG.port):

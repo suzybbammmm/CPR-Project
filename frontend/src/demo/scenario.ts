@@ -51,6 +51,7 @@ export interface DemoPhase extends ParticipantReading {
 
 const PHASE_DURATION_MS = 12_000;
 const CYCLE_DURATION_MS = PHASE_DURATION_MS * 6;
+const DEMO_TICK_MS = 300;
 
 const PHASES: readonly DemoPhase[] = [
   {
@@ -94,6 +95,9 @@ export function getDemoPhase(elapsedMs: number): DemoPhase {
 
 export function getParticipantReading(elapsedMs: number): ParticipantReading {
   const phase = getDemoPhase(elapsedMs);
+  const tickInPhase = Math.floor((Math.max(0, elapsedMs) % PHASE_DURATION_MS) / DEMO_TICK_MS);
+  const depthVariation = Math.sin(tickInPhase * 0.35) * 0.5;
+  const rateVariation = Math.sin(tickInPhase * 0.25) * 9;
   const completedCycles = Math.floor(Math.max(0, elapsedMs) / CYCLE_DURATION_MS);
   const cycleElapsed = Math.max(0, elapsedMs) % CYCLE_DURATION_MS;
   const phaseIndex = Math.floor(cycleElapsed / PHASE_DURATION_MS);
@@ -106,8 +110,8 @@ export function getParticipantReading(elapsedMs: number): ParticipantReading {
     0
   );
   return {
-    depthCm: phase.depthCm,
-    rate: phase.rate,
+    depthCm: Number((phase.depthCm + depthVariation).toFixed(1)),
+    rate: Math.round(phase.rate + rateVariation),
     recoil: phase.recoil,
     score: phase.score,
     compressionCount: Math.floor(

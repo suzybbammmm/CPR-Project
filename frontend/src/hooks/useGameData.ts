@@ -7,6 +7,10 @@ interface GameData {
   depth: number;
   bpm: number;
   accel_z: number;
+  compression_peak_cm?: number;
+  compression_count?: number;
+  recoil_percent?: number | null;
+  compression_bpm?: number | null;
 }
 
 export function useGameData() {
@@ -14,7 +18,7 @@ export function useGameData() {
   const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8765';
 
   // WebSocket mode
-  const { data: wsData, isConnected: wsConnected } = useWebSocket(
+  const { data: wsData, isConnected: wsConnected, sensorOnline } = useWebSocket(
     dataMode === 'websocket' ? wsUrl : ''
   );
 
@@ -42,14 +46,20 @@ export function useGameData() {
       data: wsData ? {
         depth: wsData.depth,
         bpm: wsData.bpm,
-        accel_z: wsData.accel_z
+        accel_z: wsData.accelZ,
+        compression_peak_cm: wsData.compressionPeakCm,
+        compression_count: wsData.compressionCount,
+        recoil_percent: wsData.recoilPercent,
+        compression_bpm: wsData.compressionBpm
       } : null,
-      isConnected: wsConnected
+      isConnected: wsConnected,
+      sensorOnline: sensorOnline
     };
   }
 
   return {
     data: simulationData,
-    isConnected: true // Simulation is always "connected"
+    isConnected: true, // Simulation is always "connected"
+    sensorOnline: true
   };
 }
