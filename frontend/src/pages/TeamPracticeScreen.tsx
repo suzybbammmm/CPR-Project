@@ -10,12 +10,14 @@ import type { ParticipantInfo, SaveStatus } from '../types/exhibition.types';
 import { ParticipantRegistrationForm } from '../components/ParticipantRegistrationForm';
 import { comboMultiplier } from '../utils/practiceGame';
 import { CompressionBurst } from '../components/CompressionBurst';
+import { LivePracticeMonitor } from '../components/LivePracticeMonitor';
 import '../team-practice.css';
 
 export interface TeamPracticeScreenProps {
  mode: RuntimeMode; victimType: VictimType; playerCount: number; phase: 'setup'|'active'|'handoff'|'results'; currentPlayerIndex: number;
  elapsedSeconds: number; remainingSeconds: number; connected: boolean; reading: ParticipantDisplayReading; coach: LiveCoachFeedback;
  game?: Pick<ReturnType<typeof teamGameStats>, 'xp'|'combo'|'maxCombo'|'scoredCount'|'score'|'grade'> & Partial<ReturnType<typeof teamGameStats>>;
+ history?: ParticipantChartPoint[];
  results: TeamRoundResult[];
  participants?: ParticipantInfo[];
  saveStatus?: SaveStatus;
@@ -74,6 +76,11 @@ export function TeamPracticeScreen(p:TeamPracticeScreenProps) {
  const nextParticipant=p.participants?.[p.currentPlayerIndex+1];
  const saveLabel=p.saveStatus==='saving'?'저장 중…':p.saveStatus==='retrying'?'저장 재시도 중…':p.saveStatus==='failed'?'저장 실패':null;
  if(showRegistration) return <main className="tp-app tp-phase-registration"><header className="tp-header"><div className="tp-brand"><span className="tp-logo"><HeartPulse size={25}/></span><div><h1>LifePulse</h1><p>함께 배우는 CPR 실습</p></div></div><div className={`tp-connection ${available?'is-connected':''}`}><Radio size={15}/>{p.mode==='demo'?'시연 · 가상 센서':available?'실제 센서 연결됨':'센서 연결 대기'}</div></header><div className="tp-registration-wrapper">{p.onRegisterParticipants&&<ParticipantRegistrationForm playerCount={p.playerCount} onSubmit={pts=>{p.onRegisterParticipants?.(pts);setShowRegistration(false);p.onStart();}} onCancel={()=>setShowRegistration(false)}/>}</div><footer className="tp-footer">{p.mode==='demo'?'시연 모드 · 가상 센서 데이터':'교육용 프로토타입 · 실제 센서 측정'}<span>복귀율은 변위 기준 · 손 압력·손 위치·환기 미측정</span></footer></main>;
+ if (p.phase === 'active') {
+  const depthCue = p.reading.depthCm < profile.targetDepthCm.min ? '더 깊게 누르세요!' : '';
+  const rateCue = p.reading.rate > 0 && p.reading.rate < 100 ? '속도를 더 올리세요!' : '';
+  return <><span className="sr-only">{available ? '' : '센서 연결 대기 · 보너스 일시 정지'} {p.game?.xp ?? 0} XP <strong>{combo}</strong><span>콤보</span> 정확 +2 · 근접 +1 {depthCue} {rateCue} ×2 {p.game?.gamePoints ?? 0} 직전 완료 압박 기준</span><LivePracticeMonitor victimLabel={profile.label} targetDepth={profile.guideDepth} handPlacement={profile.handPlacement} depth={available ? p.reading.depthCm : 0} bpm={available ? p.reading.rate : 0} recoil={available ? p.reading.recoil : null} feedback={p.coach.action} feedbackTone={p.coach.severity === 'good' ? 'good' : p.coach.severity === 'urgent' || p.coach.severity === 'offline' ? 'urgent' : 'caution'} coach={p.coach} compressionCount={p.reading.compressionCount} properPercent={p.game?.score ?? 0} averageDepth={p.reading.depthCm} averageBpm={p.reading.rate} score={p.game?.gamePoints ?? 0} combo={available ? combo : 0} secondsRemaining={p.remainingSeconds} playerLabel={`${current}번 참가자`} rotationMessage={p.playerCount > 1 ? `다음 순서 · ${nextParticipant?.name ?? `${current + 1}번 참가자`}` : '개인 실습 진행 중'} history={(p.history ?? []).map(point => ({ time: `${point.time.toFixed(1)}초`, timestamp: Math.round(point.time * 1000), depth: point.depth, bpm: point.bpm }))} onFinish={p.onEndRound} /></>;
+ }
 
  return <main className={`tp-app tp-phase-${p.phase}`}><header className="tp-header"><div className="tp-brand"><span className="tp-logo"><HeartPulse size={25}/></span><div><h1>LifePulse</h1><p>함께 배우는 CPR 실습</p></div></div><div className={`tp-connection ${available?'is-connected':''}`}><Radio size={15}/>{p.mode==='demo'?'시연 · 가상 센서':available?'실제 센서 연결됨':'센서 연결 대기'}</div></header>
  {p.phase==='setup'?<section className="tp-setup tp-panel"><div className="tp-setup-intro"><span className="tp-eyebrow">TEAM PRACTICE</span><h2>함께, 리듬을 이어가요.</h2><p>한 사람당 30초 · 차례대로 실습하고 각자의 결과를 확인해요.</p></div><div className="tp-setting"><h3>누구를 위한 실습인가요?</h3><div className="tp-victims">{(Object.keys(CPR_PROFILES) as VictimType[]).map(type=><button key={type} aria-pressed={p.victimType===type} onClick={()=>p.onConfigure(type,p.playerCount)}><strong>{CPR_PROFILES[type].label}</strong><span>{CPR_PROFILES[type].guideDepth}</span></button>)}</div></div><div className="tp-setting"><h3><Users size={17}/> 함께할 인원을 선택하세요</h3><div className="tp-people">{[1,2,3,4].map(n=><button key={n} aria-pressed={p.playerCount===n} onClick={()=>p.onConfigure(p.victimType,n)}>{n}명</button>)}</div></div><div className="tp-plan"><Timer size={19}/><span>1인 30초 × {p.playerCount}명</span><strong>총 {p.playerCount*30}초</strong></div><button className="tp-primary" onClick={()=>p.mode==='live'&&p.onRegisterParticipants?setShowRegistration(true):p.onStart()}>{p.playerCount}명 실습 시작하기 <span>→</span></button><a className="tp-guide" href="/guide">대상별 자세·손 모양 알아보기 ↗</a></section>
