@@ -25,6 +25,7 @@ export async function saveAttempt(payload: AttemptPayload): Promise<SaveAttemptR
       elapsed_seconds: payload.elapsedSeconds,
       victim_type: payload.victimType,
       score: payload.score,
+      scoring_version: payload.scoringVersion ?? 1,
       compression_events: payload.compressionEvents,
     }),
   });

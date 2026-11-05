@@ -1,3 +1,7 @@
+import { createTeamSession, startTeamRound, recordTeamFrame, finishTeamRound } from '../live/teamSession';
+import type { SensorReading } from '../live/sensorState';
+const sensorFrame: SensorReading={type:'reading',deviceId:'one',sequence:10,timestamp:1000,depth:0.7,bpm:110,compressionCount:10,compressionPeakCm:5.4,compressionBpm:110,recoilPercent:95,accelZ:0,gyroZ:0};
+import { summarizeChart } from '../utils/practiceChart';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { TeamPracticeScreen, TeamPracticeScreenProps } from './TeamPracticeScreen';
@@ -16,7 +20,7 @@ describe('TeamPracticeScreen',()=>{
 
 it('shows live XP/combo and explains the scoring rules',()=>{
  const html=renderToStaticMarkup(<TeamPracticeScreen {...base} phase="active" connected game={{xp:12,combo:6,maxCombo:6,scoredCount:6,score:100,grade:'S'}}/>);
- for(const text of ['100점','12 XP','>6</strong><span>콤보','정확 +2','근접 +1'])expect(html).toContain(text);
+ for(const text of ['100점','12 XP','>6</strong><span>콤보','MISS 0','BAD 5','GOOD 10','GREAT 15','PERFECT 20'])expect(html).toContain(text);
 });
 
 it('ranks four participants and displays score, grade, XP and best combo',()=>{
@@ -27,7 +31,18 @@ it('ranks four participants and displays score, grade, XP and best combo',()=>{
 
 it('shows both depth and rate corrections using the completed peak',()=>{
  const html=renderToStaticMarkup(<TeamPracticeScreen {...base} phase="active" connected reading={{...base.reading,depthCm:0,rate:90,compressionCount:7}} game={{xp:12,combo:6,maxCombo:6,scoredCount:6,score:100,grade:'S',gamePoints:160,assessmentDepth:4}}/>);
- for(const text of ['더 깊게 누르세요!','속도를 더 올리세요!','×2','160','직전 완료 압박 기준']) expect(html).toContain(text);
+ for(const text of ['더 깊게 누르세요!','속도를 더 올리세요!','×2','160','완료 압박 기준']) expect(html).toContain(text);
+});
+it('renders live depth immediately and does not keep the completed peak on screen',()=>{
+ const html=renderToStaticMarkup(<TeamPracticeScreen {...base} phase="active" connected reading={{...base.reading,depthCm:5.2,rate:110,compressionCount:7}} game={{xp:2,combo:0,maxCombo:1,scoredCount:2,score:50,grade:'D',gamePoints:20,assessmentDepth:4,lastJudgement:'miss'}}/>);
+ expect(html).toContain('5.2<small>cm');
+ expect(html).toContain('GOOD');
+ expect(html).toContain('기준에 가까워요');
+});
+it('shows the registered participant name in the live header',()=>{
+ const html=renderToStaticMarkup(<TeamPracticeScreen {...base} phase="active" connected participants={[{name:'제수지',studentNumber:'202245830'}]} />);
+ expect(html).toContain('<h1>제수지 <small>1/4</small></h1>');
+ expect(html).not.toContain('<h1>1번 참가자');
 });
 it('suppresses stale combo encouragement while disconnected',()=>{
  const html=renderToStaticMarkup(<TeamPracticeScreen {...base} phase="active" game={{xp:12,combo:6,maxCombo:6,scoredCount:6,score:100,grade:'S'}}/>);
@@ -40,18 +55,39 @@ it('moves depth and rate charts from the active screen to the scrollable results
  const result={attemptUuid:'chart-result',playerIndex:0,elapsedSeconds:12,compressionCount:2,observedCount:2,missingCount:0,score:100,avgDepth:5.4,avgBpm:110,avgRecoil:100,depthGoodPercent:100,rateGoodPercent:100,history};
  const active=renderToStaticMarkup(<TeamPracticeScreen {...base} phase="active" connected/>);
  const results=renderToStaticMarkup(<TeamPracticeScreen {...base} phase="results" playerCount={1} results={[result]}/>);
+ expect(active).not.toContain('실시간 압박 그래프');
  expect(active).not.toContain('30초 압박 깊이 그래프');
  expect(active).not.toContain('30초 압박 속도 그래프');
  for(const text of ['참가자별 깊이·속도 기록','30초 압박 깊이 그래프','30초 압박 속도 그래프','아래로 스크롤']) expect(results).toContain(text);
  expect(results).toContain('viewBox="0 0 610 250"');
 });
 
-it('spaces result chart points into two-second summaries',()=>{
+it('compresses the whole waveform into smooth result curves',()=>{
  const history=Array.from({length:301},(_,index)=>({time:index/10,depth:index%10===5?5.4:0,bpm:110}));
  const result={attemptUuid:'spaced-chart',playerIndex:0,elapsedSeconds:30,compressionCount:50,observedCount:50,missingCount:0,score:100,avgDepth:5.4,avgBpm:110,avgRecoil:100,depthGoodPercent:100,rateGoodPercent:100,history};
  const html=renderToStaticMarkup(<TeamPracticeScreen {...base} phase="results" playerCount={1} results={[result]}/>);
- const lines=[...html.matchAll(/<polyline points="([^"]*)"/g)];
+ const lines=[...html.matchAll(/data-sample-count="(\d+)" d="([^"]*)"/g)];
  expect(lines).toHaveLength(2);
- expect(lines[0][1].split(' ')).toHaveLength(16);
- expect(lines[1][1].split(' ')).toHaveLength(16);
+ expect(Number(lines[0][1])).toBeLessThanOrEqual(120);
+ expect(Number(lines[1][1])).toBe(60);
+ expect(lines[0][2]).toContain(' C ');
+ const depths=summarizeChart(history,'depth').map(point=>point.value);
+ expect(Math.max(...depths)).toBe(5.4);
+ expect(Math.min(...depths)).toBe(0);
+});
+
+it('keeps the completed judgement during release while displaying live depth',()=>{
+ const html=renderToStaticMarkup(<TeamPracticeScreen {...base} phase="active" connected reading={{...base.reading,depthCm:0,rate:110,compressionCount:7}} game={{xp:20,combo:1,maxCombo:1,scoredCount:1,score:100,grade:'S',assessmentDepth:5.4,assessmentBpm:110}}/>);
+ expect(html).toContain('0.0<small>cm');
+ expect(html).toContain('PERFECT');
+});
+
+it('renders actual recorded metrics with a resting sensor offset',()=>{
+ let state=startTeamRound(createTeamSession(1,'adult'),1000,{...sensorFrame,depth:0.7});
+ state=recordTeamFrame(state,{...sensorFrame,sequence:11,timestamp:1600,compressionCount:11,depth:0.8,compressionPeakCm:5.4},1600,true,1600);
+ state=recordTeamFrame(state,{...sensorFrame,sequence:12,timestamp:2200,compressionCount:12,depth:0.7,compressionPeakCm:4.5},2200,true,2200);
+ state=finishTeamRound(state,3000);
+ const html=renderToStaticMarkup(<TeamPracticeScreen {...base} phase="results" results={state.results}/>);
+ for(const text of ['>75</strong>','>5.0 ','>110 ','평균 깊이','평균 속도','완료 압박']) expect(html).toContain(text);
+ expect(html).not.toContain('분석 대기');
 });

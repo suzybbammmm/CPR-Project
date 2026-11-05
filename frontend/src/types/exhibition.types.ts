@@ -15,6 +15,7 @@ export interface AttemptPayload {
   victimType: string;
   score: number | null;
   compressionEvents: CompressionEventPayload[];
+  scoringVersion?: number;
 }
 
 export interface CompressionEventPayload {

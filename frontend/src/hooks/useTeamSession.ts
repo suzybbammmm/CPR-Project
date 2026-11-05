@@ -42,7 +42,7 @@ export function useTeamSession(mode: RuntimeMode, initialVictim: VictimType, ini
        const round=ticked.results[ticked.results.length-1];
        if(round&&round.participant&&mode!=='demo'){
          const compressionEvents=buildCompressionPayload(current.events,current.victimType);
-         const payload={attemptUuid:round.attemptUuid,sessionUuid:current.sessionUuid,studentNumber:round.participant.studentNumber,name:round.participant.name,phone:round.participant.phone,playerOrder:round.playerIndex,elapsedSeconds:round.elapsedSeconds,victimType:current.victimType,score:round.score,compressionEvents};
+         const payload={attemptUuid:round.attemptUuid,sessionUuid:current.sessionUuid,studentNumber:round.participant.studentNumber,name:round.participant.name,phone:round.participant.phone,playerOrder:round.playerIndex,elapsedSeconds:round.elapsedSeconds,victimType:current.victimType,score:round.score,scoringVersion:2,compressionEvents};
          setTimeout(()=>saveAttempt.save(payload),0);
        }
      }
@@ -61,7 +61,7 @@ export function useTeamSession(mode: RuntimeMode, initialVictim: VictimType, ini
  const data=mode==='demo'?demoFrame(elapsedSeconds*1000):socket.data;
  const game=teamGameStats(session.events,session.victimType);
  const live=buildLiveParticipantReading(data,elapsedSeconds*1000,connected,session.victimType);
- const reading={...live,compressionCount:session.compressionCount,score:game.score??0,recoil:connected?(session.events.at(-1)?.recoil??null):null};
+ const reading={...live,compressionCount:session.compressionCount,score:game.score??0,recoil:connected?live.recoil:null};
  const coach=getLiveCoachFeedback({sensorOnline:connected,victimType:session.victimType,depth:session.events.at(-1)?.depth??reading.depthCm,bpm:reading.rate,compressionCount:session.compressionCount});
  const baseline=()=>mode==='demo'?demoFrame(0):connected?socket.data:null;
  const configure=(victimType:VictimType,playerCount:number)=>setSession(current=>current.phase==='setup'?createTeamSession(playerCount,victimType):current);
@@ -71,7 +71,7 @@ export function useTeamSession(mode: RuntimeMode, initialVictim: VictimType, ini
    const round=next.results[next.results.length-1];
    if(round&&round.participant&&mode!=='demo'){
      const compressionEvents=buildCompressionPayload(current.events,current.victimType);
-     const payload={attemptUuid:round.attemptUuid,sessionUuid:current.sessionUuid,studentNumber:round.participant.studentNumber,name:round.participant.name,phone:round.participant.phone,playerOrder:round.playerIndex,elapsedSeconds:round.elapsedSeconds,victimType:current.victimType,score:round.score,compressionEvents};
+     const payload={attemptUuid:round.attemptUuid,sessionUuid:current.sessionUuid,studentNumber:round.participant.studentNumber,name:round.participant.name,phone:round.participant.phone,playerOrder:round.playerIndex,elapsedSeconds:round.elapsedSeconds,victimType:current.victimType,score:round.score,scoringVersion:2,compressionEvents};
      setTimeout(()=>saveAttempt.save(payload),0);
    }
    return next;

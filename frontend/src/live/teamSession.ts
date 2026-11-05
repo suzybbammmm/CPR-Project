@@ -1,7 +1,6 @@
 import type { ParticipantChartPoint } from '../pages/ParticipantSessionScreen';
 import { CPR_PROFILES, type VictimType } from '../utils/cprGuidance';
-import { calculatePoints } from '../utils/scoring';
-import { practiceBonus } from '../utils/practiceGame';
+import { assessPracticeCompression, practiceBonus } from '../utils/practiceGame';
 import { calculateGrade } from '../utils/grading';
 import type { SensorReading } from './sensorState';
 import type { ParticipantInfo } from '../types/exhibition.types';
@@ -49,7 +48,7 @@ export function createTeamSession(playerCount: number, victimType: VictimType): 
 }
 export function startTeamRound(state: TeamSession, now: number, baseline: SensorReading | null): TeamSession {
   if (state.phase !== 'setup' && state.phase !== 'handoff') return state;
-  return { ...state, phase: 'active', startedAt: now, events: [], history: [], compressionCount: 0, missingCount: 0, previousFrame: baseline, lastReceivedAt: null, armed: baseline !== null && baseline.depth <= 0.5 };
+  return { ...state, phase: 'active', startedAt: now, events: [], history: [], compressionCount: 0, missingCount: 0, previousFrame: baseline, lastReceivedAt: null, armed: baseline !== null && baseline.depth < 1.5 };
 }
 const average = (values: number[]): number | null => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
 export function summarizeTeamRound(state: TeamSession, now: number): TeamRoundResult {
@@ -92,8 +91,11 @@ export function recordTeamFrame(state: TeamSession, frame: SensorReading, now: n
   if (previous && !restarted && frame.sequence > 0 && previous.sequence > 0 && frame.sequence <= previous.sequence) return current;
   const history = [...current.history, { time: Math.min(TEAM_ROUND_SECONDS, (receivedAt - current.startedAt) / 1000), depth: frame.depth, bpm: frame.bpm }];
   const next = { ...current, history, previousFrame: frame, lastReceivedAt: receivedAt };
-  if (restarted || !current.armed) return { ...next, armed: frame.depth <= 0.5 };
   const difference = frame.compressionCount - (previous?.compressionCount??frame.compressionCount);
+  // The firmware owns completed-cycle detection. A resting offset below its
+  // 1.5cm start threshold must not block all results. If starting mid-press,
+  // discard that inherited cycle once, then accept subsequent completions.
+  if (restarted || !current.armed) return { ...next, armed: frame.depth < 1.5 || (!restarted && difference > 0) };
   if (difference <= 0) return next;
   return {
     ...next, compressionCount: current.compressionCount + difference, missingCount: current.missingCount + difference - 1,
@@ -103,14 +105,30 @@ export function recordTeamFrame(state: TeamSession, frame: SensorReading, now: n
 }
 
 export function teamGameStats(events: TeamEvent[], victimType: VictimType) {
- let xp=0, combo=0, maxCombo=0, scoredCount=0;
+ let xp=0, scoredCount=0, perfectCount=0, nearCount=0;
+ const bonus=practiceBonus(events,victimType);
+ const judgementCounts={miss:0,bad:0,good:0,great:0,perfect:0};
  for (const event of events) {
-   if (event.bpm === null || event.bpm <= 0) { combo=0; continue; }
-   const result=calculatePoints(event.depth,event.bpm,combo,victimType);
-   xp+=result.points;combo=result.newCombo;maxCombo=Math.max(maxCombo,combo);scoredCount++;
+   if (event.bpm === null || event.bpm <= 0) continue;
+   const assessment=assessPracticeCompression(event,victimType);
+   judgementCounts[assessment.judgement]++;
+   xp+=assessment.basePoints;
+   scoredCount++;
+   if(assessment.judgement==='perfect') perfectCount++;
+   else if(assessment.judgement==='great'||assessment.judgement==='good') nearCount++;
  }
- const score=scoredCount ? Math.round(100*xp/(2*scoredCount)) : null;
- return {...practiceBonus(events,victimType),xp,combo,maxCombo,scoredCount,score,grade:score===null?null:calculateGrade(score)};
+ const score=scoredCount ? Math.round(100*xp/(20*scoredCount)) : null;
+ const validBpms=events.flatMap(event=>event.bpm!==null&&event.bpm>0?[event.bpm]:[]);
+ const recoils=events.flatMap(event=>event.recoil!==null?[event.recoil]:[]);
+ return {
+  ...bonus,xp,scoredCount,perfectCount,nearCount,judgementCounts,
+  lastJudgement:bonus.lastAssessment?.judgement??'miss',
+  properPercent:events.length?Math.round(100*judgementCounts.perfect/events.length):0,
+  averageDepth:events.length?average(events.map(event=>event.depth))??0:0,
+  averageBpm:validBpms.length?average(validBpms)??0:0,
+  averageRecoil:recoils.length?average(recoils):null,
+  score,grade:score===null?null:calculateGrade(score)
+ };
 }
 
 /** Build compression_events array ready to POST to /api/v1/attempts */
@@ -118,8 +136,8 @@ export function buildCompressionPayload(events: TeamEvent[], victimType: VictimT
  let combo=0;
  return events.map((event,i)=>{
    if(event.bpm===null||event.bpm<=0){combo=0;return{seq:i,depth_cm:event.depth,bpm:event.bpm,recoil_pct:event.recoil,points:0,combo_at:0};}
-   const result=calculatePoints(event.depth,event.bpm??0,combo,victimType);
-   combo=result.newCombo;
-   return{seq:i,depth_cm:event.depth,bpm:event.bpm,recoil_pct:event.recoil,points:result.points,combo_at:combo};
+   const result=assessPracticeCompression(event,victimType,combo);
+   combo=result.combo;
+   return{seq:i,depth_cm:event.depth,bpm:event.bpm,recoil_pct:event.recoil,points:result.basePoints,combo_at:combo};
  });
 }

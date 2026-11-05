@@ -1,4 +1,7 @@
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8766';
+const runtimeApiBase = typeof window === 'undefined'
+  ? 'http://localhost:8766'
+  : `${window.location.protocol}//${window.location.hostname}:8766`;
+const BASE = import.meta.env.VITE_API_URL ?? runtimeApiBase;
 
 export class ApiError extends Error {
   constructor(

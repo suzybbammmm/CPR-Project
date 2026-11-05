@@ -65,8 +65,16 @@ describe('team session rounds', () => {
 
 it('awards XP, resets combos and produces a normalized grade', () => {
  const stats = teamGameStats([{depth:5.5,bpm:110,recoil:100},{depth:5.5,bpm:110,recoil:80},{depth:4.5,bpm:110,recoil:100},{depth:2,bpm:50,recoil:null},{depth:5.5,bpm:null,recoil:null}], 'adult');
- expect(stats).toMatchObject({xp:5,combo:0,maxCombo:2,score:63,grade:'C',scoredCount:4});
+ expect(stats).toMatchObject({xp:55,combo:0,maxCombo:3,score:69,grade:'C',scoredCount:4,perfectCount:2,nearCount:1,properPercent:40,lastJudgement:'miss',gamePoints:55,averageBpm:95,averageRecoil:280/3});
  expect(teamGameStats([], 'adult').score).toBeNull();
+});
+it('drives live quality and combo from each completed compression',()=>{
+ const perfect=teamGameStats([{depth:5.5,bpm:110,recoil:95}], 'adult');
+ expect(perfect).toMatchObject({combo:1,lastJudgement:'perfect',gamePoints:20,properPercent:100});
+ const near=teamGameStats([{depth:5.5,bpm:110,recoil:95},{depth:4.4,bpm:110,recoil:85}], 'adult');
+ expect(near).toMatchObject({combo:2,lastJudgement:'great',gamePoints:35,properPercent:50});
+ const retry=teamGameStats([{depth:2,bpm:50,recoil:70}], 'adult');
+ expect(retry).toMatchObject({combo:0,lastJudgement:'miss',gamePoints:0,properPercent:0});
 });
 it('automatically freezes exactly once at the 30-second deadline', () => {
  let state=startTeamRound(createTeamSession(2,'adult'),1000,frame());
@@ -82,4 +90,20 @@ it('does not score the first compression interval inherited across a handoff', (
  expect(state.events[0].bpm).toBeNull();
  state=recordTeamFrame(state,frame(52,{compressionBpm:110}),1700,true,1700);
  expect(state.events[1].bpm).toBe(110);
+});
+
+it('records real firmware completions despite a 0.7cm resting offset and fills results',()=>{
+ let state=startTeamRound(createTeamSession(1,'adult'),1000,frame(266,{depth:0.7}));
+ state=recordTeamFrame(state,frame(267,{depth:0.83,compressionPeakCm:5.4,compressionBpm:110}),1600,true,1600);
+ state=recordTeamFrame(state,frame(268,{depth:0.72,compressionPeakCm:4.5,compressionBpm:110}),2200,true,2200);
+ state=recordTeamFrame(state,frame(269,{depth:0.65,compressionPeakCm:5.4,compressionBpm:130}),2800,true,2800);
+ const result=finishTeamRound(state,3000).results[0];
+ expect(result.avgDepth).toBeCloseTo(5.1);
+ expect(result).toMatchObject({compressionCount:3,observedCount:3,score:75,avgBpm:120,grade:'B'});
+});
+it('recovers after the inherited completion even if release stays above 0.5cm',()=>{
+ let state=startTeamRound(createTeamSession(1,'adult'),1000,frame(10,{depth:5}));
+ state=recordTeamFrame(state,frame(11,{depth:0.8}),1600,true,1600);
+ state=recordTeamFrame(state,frame(12,{depth:0.9}),2200,true,2200);
+ expect(state.events).toHaveLength(1);
 });

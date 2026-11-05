@@ -9,6 +9,7 @@ import { calculateGrade } from '../utils/grading';
 import { DataPoint } from '../types/game.types';
 import { getNewCompressionEvents } from '../utils/compressionEvents';
 import { getLiveCoachFeedback } from '../utils/cprCoach';
+import { assessPracticeCompression } from '../utils/practiceGame';
 
 export function GamePlayScreen() {
   const { savePlayerResult, currentPlayerIndex, playerCount, victimType, setScreen, dataMode } = useGameContext();
@@ -150,7 +151,12 @@ export function GamePlayScreen() {
   const averages = calculateAverages(compressionPeaks);
   const rotationMessage = rotationPrompt?.message ?? (playerCount > 1 ? `다음 교대까지 ${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}` : '개인 실습 진행 중');
 
+  const assessment = assessPracticeCompression({depth:lastCompressionDepth,bpm:currentBpm,recoil:null},victimType,combo);
   return <LivePracticeMonitor
+    targetDepthRange={[profile.targetDepthCm.min,profile.targetDepthCm.max]}
+    connected={dataMode === 'simulation' || sensorOnline}
+    accuracyScore={null} grade={null}
+    judgement={assessment.judgement} matchPercent={assessment.matchPercent} depthScore={assessment.depthScore} rateScore={assessment.rateScore} recoilLimited={false}
     victimLabel={profile.label}
     targetDepth={profile.guideDepth}
     handPlacement={profile.handPlacement}

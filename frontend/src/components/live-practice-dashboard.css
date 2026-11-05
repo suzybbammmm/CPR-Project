@@ -56,3 +56,14 @@
 .lp-ecg svg {
   transform-origin: center;
 }
+
+/* Live criteria states driven by completed compression events. */
+.lp-recoil p{font-weight:800}.lp-recoil.good p{color:#087443}.lp-recoil.caution p{color:#b26a00}.lp-recoil.low p{color:#c93636}.lp-recoil.pending p{color:#68758e}.lp-recoil p span{color:#68758e;font-weight:400}
+.lp-finish.waiting h2{color:#9a6a22}
+.lp-rhythm .tp-voice-control{position:static;max-width:none}.lp-rhythm .tp-voice-toggle{width:auto;height:auto;border:0;border-radius:18px;background:#f1f3f9;color:#68758e;padding:12px 15px;font-size:13px!important}.lp-rhythm .tp-voice-error{right:34px;top:82px}
+.lp-judgement.judgement-miss>b{color:#94a3b8}.lp-judgement.judgement-bad>b{color:#ef5350}.lp-judgement.judgement-good>b{color:#f59e0b}.lp-judgement.judgement-great>b{color:#2563eb}.lp-judgement.judgement-perfect>b{color:#16b878}
+
+.lp-live-charts{max-width:1920px;margin:0 auto 20px}.lp-live-charts .lp-chart{background:#fff;border-radius:22px;padding:20px;min-width:0}.lp-chart svg{height:180px}.lp-finish{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px}.lp-finish>div{min-width:0}.lp-finish p{font-size:16px;color:#68758e;margin:10px 0}.lp-finish button{flex:none;min-width:max-content;white-space:nowrap}.lp-finish progress{display:block;width:100%;height:10px;overflow:hidden;border:0;border-radius:999px;background:#eef2f8;accent-color:#12b878}.lp-finish progress::-webkit-progress-bar{background:#eef2f8;border-radius:999px}.lp-finish progress::-webkit-progress-value{background:#12b878;border-radius:999px}.lp-finish progress::-moz-progress-bar{background:#12b878;border-radius:999px}.lp-top-grid{grid-template-columns:minmax(0,1.2fr) minmax(0,2.4fr) minmax(0,1.2fr)}.lp-recoil{gap:18px}.lp-recoil h2{white-space:nowrap;font-weight:950}.lp-score{min-width:0}.lp-details p{flex-wrap:wrap}@media(max-width:1100px){.lp-top-grid{grid-template-columns:1fr 1fr}.lp-score{grid-column:1/-1;order:-1}.lp-main-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.7fr) minmax(0,1fr)}.lp-gauge-track{width:90px}.lp-metric h2{flex-wrap:wrap}}@media(max-width:700px){.lp-main-grid{grid-template-columns:1fr}.lp-live-charts .lp-chart{padding:14px}.lp-chart svg{height:150px}}
+@media(max-width:700px){.lp-finish{grid-column:auto;grid-template-columns:1fr;align-items:start;gap:10px}.lp-finish h2{font-size:16px}.lp-finish p{font-size:11px}.lp-recoil{gap:10px}.lp-recoil h2{font-size:16px}.lp-recoil p span{display:block}}
+
+.lp-trend-line{transition:d .1s linear}@media(prefers-reduced-motion:reduce){.lp-trend-line{transition:none}}
