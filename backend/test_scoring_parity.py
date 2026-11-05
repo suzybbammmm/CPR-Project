@@ -241,3 +241,21 @@ class TestValidateAttempt:
         assert result["score"] is None
         assert result["grade"] is None
         assert result["score_corrected"] is False
+
+@pytest.mark.parametrize('depth,bpm,score', [
+    (5.4,110,100),(4.5,110,75),(5.4,130,75),(4,145,50),
+    (4.25,85,75),(6.9,138,75),(3.5,70,50),(7.8,156,50),
+    (2.75,55,25),(8.7,174,25),(2.74,110,0),(8.71,110,0),
+    (5.4,54,0),(5.4,175,0),
+])
+def test_practice_v2_thresholds(depth, bpm, score):
+    from scoring_validator import score_practice_attempt
+    result = score_practice_attempt([{'depth':depth,'bpm':bpm,'recoil_percent':50}], 'adult')
+    assert result['score'] == score
+
+
+def test_practice_v2_average_ignores_unmeasured_rate():
+    from scoring_validator import score_practice_attempt
+    events = [{'depth':5.4,'bpm':None},{'depth':4.5,'bpm':110},{'depth':4,'bpm':145}]
+    assert score_practice_attempt(events, 'adult')['score'] == 63
+    assert validate_attempt(0, events, 'adult', 2)['score'] == 63

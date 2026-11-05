@@ -12,6 +12,7 @@ import os
 import re
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import urlsplit
 
 import aiohttp
 import aiosqlite
@@ -52,7 +53,11 @@ logger = logging.getLogger(__name__)
 
 _API_PORT = int(os.environ.get("LIFEPULSE_API_PORT", "8766"))
 _ADMIN_PASSWORD_HASH = os.environ.get("LIFEPULSE_ADMIN_PASSWORD_HASH", "")
-_CORS_ORIGIN = os.environ.get("LIFEPULSE_CORS_ORIGIN", "http://localhost:5173")
+_CORS_ORIGINS = {
+    origin.strip().rstrip("/")
+    for origin in os.environ.get("LIFEPULSE_CORS_ORIGIN", "").split(",")
+    if origin.strip()
+}
 _COOKIE_NAME = "lifepulse_admin"
 
 # Shared sensor state injected from backend_server.py
@@ -79,10 +84,33 @@ def _err(code: str, message: str, status: int = 400) -> web.Response:
     return _json({"success": False, "error": {"code": code, "message": message}}, status)
 
 
+def _allowed_cors_origin(request: web.Request) -> str | None:
+    origin = request.headers.get("Origin", "").rstrip("/")
+    if not origin:
+        return None
+    if origin in _CORS_ORIGINS:
+        return origin
+    try:
+        origin_url = urlsplit(origin)
+        request_host = request.host.rsplit(":", 1)[0].strip("[]").lower()
+    except ValueError:
+        return None
+    origin_host = (origin_url.hostname or "").lower()
+    # The frontend and API are served from different ports during exhibitions.
+    # Accept only HTTP(S) pages on the same machine, including any Vite dev port.
+    if origin_url.scheme in {"http", "https"} and (
+        origin_host in {"localhost", "127.0.0.1", "::1"}
+        or origin_host == request_host
+    ):
+        return origin
+    return None
+
+
 def _cors_headers(request: web.Request) -> dict[str, str]:
-    if request.headers.get("Origin") == _CORS_ORIGIN:
+    origin = _allowed_cors_origin(request)
+    if origin:
         return {
-            "Access-Control-Allow-Origin": _CORS_ORIGIN,
+            "Access-Control-Allow-Origin": origin,
             "Access-Control-Allow-Credentials": "true",
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -242,6 +270,9 @@ async def save_attempt_handler(request: web.Request) -> web.Response:
     elapsed_seconds = body.get("elapsed_seconds", 0)
     victim_type = str(body.get("victim_type", "adult")).strip()
     client_score = body.get("score")
+    scoring_version = body.get("scoring_version", 1)
+    if scoring_version not in (1, 2):
+        return _err("VALIDATION_ERROR", "유효하지 않은 scoring_version입니다.")
     compression_events_raw = body.get("compression_events", [])
 
     if not attempt_uuid:
@@ -264,7 +295,7 @@ async def save_attempt_handler(request: web.Request) -> web.Response:
         for e in compression_events_raw
     ]
 
-    validated = validate_attempt(client_score, scoring_events, victim_type)
+    validated = validate_attempt(client_score, scoring_events, victim_type, scoring_version)
 
     # Build compression_events list for db (db expects depth_cm, bpm, recoil_pct)
     db_events = [
@@ -340,7 +371,7 @@ async def save_attempt_handler(request: web.Request) -> web.Response:
                 "average_recoil": avg_recoil,
                 "depth_good_percent": depth_good_pct,
                 "rate_good_percent": rate_good_pct,
-                "scoring_version": 1,
+                "scoring_version": scoring_version,
                 "victim_type": victim_type,
                 "compression_events": db_events,
             },

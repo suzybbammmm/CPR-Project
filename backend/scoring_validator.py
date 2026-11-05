@@ -80,17 +80,46 @@ def score_attempt(
     }
 
 
+def score_practice_attempt(events: list[dict], victim_type: str) -> dict:
+    """Version 2: minimum depth/rate tier, same as assessPracticeCompression."""
+    import math
+    target = CPR_PROFILES[victim_type]
+    xp = combo = max_combo = count = 0
+    for event in events:
+        bpm = event.get('bpm')
+        if bpm is None or not math.isfinite(float(bpm)) or bpm <= 0:
+            combo = 0
+            continue
+        depth = math.floor(float(event['depth']) * 100 + .5) / 100
+        rate = math.floor(float(bpm) + .5)
+        depth_tier = 0
+        for tier, lower, upper in [(4, 1, 1), (3, .85, 1.15), (2, .70, 1.30), (1, .55, 1.45)]:
+            if round(target['min'] * lower, 2) <= depth <= round(target['max'] * upper, 2):
+                depth_tier = tier
+                break
+        rate_tier = 4 if 100 <= rate <= 120 else 3 if 85 <= rate <= 138 else 2 if 70 <= rate <= 156 else 1 if 55 <= rate <= 174 else 0
+        tier = min(depth_tier, rate_tier)
+        combo = combo + 1 if tier >= 3 else combo if tier == 2 else 0
+        max_combo = max(max_combo, combo)
+        xp += tier * 5
+        count += 1
+    score = math.floor(100 * xp / (20 * count) + .5) if count else None
+    return {'score': score, 'grade': calculate_grade(score) if score is not None else None,
+            'xp': xp, 'max_combo': max_combo, 'scored_count': count}
+
+
 def validate_attempt(
     client_score: Optional[int],
     events: list[dict],
     victim_type: str,
+    scoring_version: int = 1,
 ) -> dict:
     """
     Compare client-reported score against server calculation.
     If difference > 2, use server value and set score_corrected=True.
     Returns: {score, grade, xp, max_combo, score_corrected}
     """
-    result = score_attempt(events, victim_type)
+    result = score_practice_attempt(events, victim_type) if scoring_version == 2 else score_attempt(events, victim_type)
     server_score = result['score']
 
     score_corrected = False

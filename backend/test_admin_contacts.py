@@ -83,6 +83,15 @@ class AdminContactsTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn("student_number", row)
         self.assertNotIn("01000000000", await response.text())
 
+    async def test_cors_accepts_local_dev_ports_and_rejects_other_hosts(self):
+        for origin in ("http://localhost:5173", "http://localhost:5174"):
+            response = await self.client.get("/api/v1/leaderboard", headers={"Origin": origin})
+            self.assertEqual(response.headers.get("Access-Control-Allow-Origin"), origin)
+        response = await self.client.get(
+            "/api/v1/leaderboard", headers={"Origin": "https://untrusted.example"}
+        )
+        self.assertNotIn("Access-Control-Allow-Origin", response.headers)
+
     async def test_saved_attempt_contact_is_available_to_admin(self):
         response = await self.client.post('/api/v1/attempts', json={
             'attempt_uuid': 'new-attempt', 'session_uuid': 'new-session',
@@ -96,3 +105,17 @@ class AdminContactsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(data['total'], 1)
         self.assertEqual(data['attempts'][0]['phone'], '01000000002')
         self.assertEqual(data['attempts'][0]['score'], 100)
+
+    async def test_practice_v2_score_is_saved_and_ranked(self):
+        response = await self.client.post('/api/v1/attempts', json={
+            'attempt_uuid': 'practice-v2', 'session_uuid': 'practice-v2-session',
+            'student_number': 'test0003', 'name': '판정테스트',
+            'elapsed_seconds': 30, 'victim_type': 'adult', 'score': 0, 'scoring_version': 2,
+            'compression_events': [{'depth_cm': 4.5, 'bpm': 130, 'recoil_pct': 80}],
+        })
+        self.assertEqual(response.status, 201)
+        self.assertEqual((await response.json())['score'], 75)
+        response = await self.client.get('/api/v1/leaderboard', params={'scoring_version':'2'})
+        rows = (await response.json())['entries']
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['score'], 75)
