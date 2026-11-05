@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+
+.lp-dashboard{min-height:100dvh;background:#f3f5fc;color:#111827;padding:22px 24px 12px;font-family:'Noto Sans KR',sans-serif;box-sizing:border-box}.lp-dashboard *{box-sizing:border-box}.lp-dashboard h1,.lp-dashboard h2,.lp-dashboard h3,.lp-dashboard p{margin:0}.lp-header{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:96px;max-width:1920px;margin:auto}.lp-brand{display:flex;align-items:center;gap:18px}.lp-brand>span{display:grid;place-items:center;width:64px;height:64px;background:#ff3b7f;color:white;border-radius:24px}.lp-brand p{font-size:18px;color:#68758e}.lp-brand h1{font-size:34px;letter-spacing:-1.8px}.lp-brand small{font-size:22px;color:#68758e}.lp-timer{display:flex;align-items:center;gap:24px}.lp-timer i{display:block;width:190px;height:10px;background:#edf0f7;border-radius:99px;overflow:hidden}.lp-timer i:after{content:'';display:block;width:100%;height:100%;background:#2563eb;border-radius:inherit}.lp-timer strong{font-size:58px;line-height:1;color:#111827;font-variant-numeric:tabular-nums}.lp-timer.urgent strong{color:#ef403b}.lp-timer.urgent i:after{background:#ef403b}.lp-timer button,.lp-finish button{border:0;border-radius:20px;background:#fff;padding:20px 28px;font-size:20px;font-weight:800;color:#111827;box-shadow:0 4px 16px #22365c0b;cursor:pointer}.lp-card{background:#fff;border-radius:28px;box-shadow:0 4px 18px #22365c0b}.lp-top-grid{display:grid;grid-template-columns:1.1fr 2.9fr 1.1fr;gap:28px;max-width:1920px;margin:auto}.lp-recoil{display:flex;align-items:center;gap:32px;padding:30px}.lp-ring{width:138px;height:138px;border-radius:50%;background:conic-gradient(#12b878 0 91%,#eef2f8 91%);display:grid;place-items:center;flex:none}.lp-ring:after{content:'';position:absolute}.lp-ring b{display:grid;place-items:center;width:104px;height:104px;border-radius:50%;background:#fff;font-size:42px}.lp-ring small{font-size:20px;color:#68758e}.lp-recoil h2{font-size:31px}.lp-recoil p{margin-top:10px;font-size:20px;color:#68758e}.lp-recoil p.ok{color:#087443;font-weight:800}.lp-recoil p span{color:#68758e;font-weight:400}.lp-score{display:flex;align-items:center;gap:48px;padding:28px 42px}.lp-score>div:first-child{border-right:1px solid #e5e9f1;padding-right:70px}.lp-score p{font-size:18px;color:#68758e;font-weight:700}.lp-score strong{display:block;font-size:78px;line-height:1;font-variant-numeric:tabular-nums}.lp-score strong small{font-size:24px;color:#68758e;margin-left:8px}.lp-score>div:first-child>span{color:#68758e;font-size:18px}.lp-combo{display:grid;grid-template-columns:auto auto auto;align-items:center;gap:14px;flex:1}.lp-combo>b{font-size:64px}.lp-combo>span{font-size:27px;color:#68758e}.lp-combo em{font-style:normal;background:#f59e0b;color:#111827;padding:14px 18px;border-radius:20px;font-size:26px;font-weight:900}.lp-combo>div{grid-column:1/-1;margin-left:8px}.lp-combo p{font-size:18px;margin-bottom:10px}.lp-combo i{display:block;height:10px;background:#eef1f7;border-radius:99px;overflow:hidden}.lp-combo i span{display:block;height:100%;background:#2563eb;border-radius:inherit}.lp-finish{display:flex;align-items:center;justify-content:space-between;padding:30px}.lp-finish h2{font-size:32px}.lp-finish button{background:#2563eb;color:#fff;padding:16px 22px;font-size:18px}.lp-main-grid{display:grid;grid-template-columns:1fr 2.7fr 1fr;gap:28px;max-width:1920px;margin:28px auto 0}.lp-metric{padding:34px;min-height:650px;display:flex;flex-direction:column}.lp-metric h2{display:flex;align-items:center;gap:10px;font-size:25px}.lp-metric h2 svg{color:#68758e}.lp-metric h2 span{font-size:19px;color:#68758e;font-weight:400}.lp-metric>strong{font-size:78px;line-height:1;margin-top:28px;font-variant-numeric:tabular-nums}.lp-metric>strong small{font-size:25px;color:#68758e;margin-left:8px}.lp-gauge-wrap{display:flex;gap:14px;flex:1;min-height:370px;margin:22px auto 12px}.lp-gauge-scale{width:32px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;color:#68758e;font-size:16px}.lp-gauge-scale b{color:#087443}.lp-gauge-track{position:relative;width:210px;background:#f0f3f9;border-radius:22px;overflow:visible}.lp-gauge-target{position:absolute;left:0;width:100%;background:#dff5e9;border-top:2px solid #17865f;border-bottom:2px solid #17865f}.lp-gauge-fill{position:absolute;left:7px;right:7px;bottom:7px;background:#12b878;border-radius:15px;transition:height .25s}.lp-gauge-fill.down{top:7px;bottom:auto;border-radius:15px}.lp-gauge-label{position:absolute;left:calc(100% + 10px);top:50%;background:#dff5e9;color:#087443;border-radius:8px;padding:6px 10px;font-weight:800;font-size:14px}.lp-status{font-size:20px;color:#087443;font-weight:800}.lp-status b{display:inline-block;width:18px;height:18px;background:#12b878;border-radius:50%;margin-right:12px;vertical-align:-2px}.lp-rhythm{min-height:650px;padding:34px;display:flex;flex-direction:column}.lp-rhythm header{display:flex;justify-content:space-between;align-items:center}.lp-rhythm header h2{display:flex;align-items:center;gap:12px;font-size:28px}.lp-rhythm header h2 svg{color:#ff3b7f}.lp-rhythm header h2 span{color:#68758e;font-size:21px;font-weight:400}.lp-rhythm header button{border:0;border-radius:50%;width:56px;height:56px;background:#f1f3f9;color:#68758e}.lp-ecg{height:270px;display:grid;place-items:center;opacity:.62}.lp-ecg svg{width:min(70%,620px);filter:drop-shadow(0 8px 22px #ff3b7f55)}.lp-ecg path{fill:none;stroke:#ff8db2;stroke-width:14;stroke-linecap:round;stroke-linejoin:round}.lp-judgement{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.lp-judgement>b{font-size:clamp(64px,7vw,150px);line-height:.9;font-style:italic;color:#16b878;letter-spacing:-6px}.lp-judgement>strong{font-size:30px;font-style:italic;margin-top:24px}.lp-judgement>span{font-size:34px;font-weight:900;margin-top:12px}.lp-judgement>small{margin-top:14px;color:#68758e;font-size:21px}.lp-summary,.lp-details,.lp-footer{max-width:1920px;margin:auto}.lp-summary{display:flex;gap:34px;padding:20px 14px;color:#68758e;font-size:16px}.lp-summary b{color:#111827;margin-left:6px}.push-right{margin-left:auto}.lp-details{border-top:1px solid #dfe5ef;border-bottom:1px solid #dfe5ef;padding:0 14px;color:#68758e}.lp-details summary{display:flex;justify-content:space-between;align-items:center;min-height:50px;cursor:pointer;list-style:none}.lp-details summary::-webkit-details-marker{display:none}.lp-details summary span{color:#111827}.lp-charts{display:grid;grid-template-columns:1fr 1fr;gap:28px}.lp-chart{color:#16b878}.lp-chart>div{display:flex;justify-content:space-between}.lp-chart h3{color:#68758e;font-size:16px}.lp-chart svg{display:block;width:100%;height:120px;margin:10px 0}.lp-details p{display:flex;align-items:center;gap:6px;margin:8px 0;font-size:14px}.lp-footer{display:flex;justify-content:space-between;padding:14px;color:#68758e;font-size:13px}
+@media(max-width:1100px){.lp-top-grid,.lp-main-grid{grid-template-columns:1fr 1.7fr 1fr;gap:14px}.lp-score{padding:22px;gap:20px}.lp-score>div:first-child{padding-right:22px}.lp-score strong,.lp-metric>strong{font-size:58px}.lp-recoil{padding:20px;gap:14px}.lp-ring{width:100px;height:100px}.lp-ring b{width:76px;height:76px;font-size:30px}.lp-recoil h2,.lp-finish h2{font-size:23px}.lp-rhythm,.lp-metric{padding:22px;min-height:540px}.lp-timer strong{font-size:44px}.lp-gauge-track{width:150px}}
+@media(max-width:700px){.lp-dashboard{padding:12px}.lp-header{min-height:70px}.lp-brand{gap:9px}.lp-brand>span{width:46px;height:46px;border-radius:16px}.lp-brand p{font-size:11px}.lp-brand h1{font-size:21px}.lp-brand small{font-size:15px}.lp-timer{gap:8px}.lp-timer i{display:none}.lp-timer strong{font-size:28px}.lp-timer button{padding:10px 12px;border-radius:12px;font-size:11px}.lp-top-grid,.lp-main-grid{grid-template-columns:1fr;gap:10px;margin-top:10px}.lp-top-grid{grid-template-columns:1fr 1fr}.lp-score{grid-column:1/-1;order:-1}.lp-recoil,.lp-score,.lp-finish{padding:16px;border-radius:18px}.lp-ring{width:72px;height:72px}.lp-ring b{width:56px;height:56px;font-size:20px}.lp-recoil h2,.lp-finish h2{font-size:18px}.lp-recoil p{font-size:12px}.lp-score strong{font-size:48px}.lp-score p,.lp-score>div:first-child>span{font-size:12px}.lp-score>div:first-child{padding-right:14px}.lp-combo{gap:5px}.lp-combo>b{font-size:38px}.lp-combo>span{font-size:14px}.lp-combo em{font-size:15px;padding:8px}.lp-combo p{font-size:11px}.lp-finish{grid-column:1/-1}.lp-finish button{font-size:12px;padding:10px}.lp-metric,.lp-rhythm{min-height:430px;padding:18px;border-radius:18px}.lp-metric h2,.lp-rhythm header h2{font-size:18px}.lp-metric h2 span,.lp-rhythm header h2 span{font-size:12px}.lp-metric>strong{font-size:58px}.lp-gauge-wrap{min-height:240px}.lp-gauge-track{width:100px}.lp-status{font-size:14px}.lp-ecg{height:150px}.lp-judgement>b{font-size:72px}.lp-judgement>span{font-size:24px}.lp-judgement>small{font-size:13px}.lp-summary{gap:12px;flex-wrap:wrap;font-size:11px;padding:12px 4px}.push-right{margin-left:0;width:100%}.lp-charts{grid-template-columns:1fr}.lp-footer{font-size:10px;display:block}.lp-footer span{display:block;margin-top:4px}}
+
+/* The reference artwork is designed for a large exhibition display. Keep its
+   hierarchy, but fit the complete participant dashboard into a normal laptop
+   viewport. Mobile keeps the compact layout above at its native size. */
+@media(min-width:1101px){.lp-dashboard{zoom:.7}}
+
+/* Improve hierarchy for the live practice display. */
+.lp-brand h1,
+.lp-brand h1 small,
+.lp-rhythm header h2,
+.lp-metric h2,
+.lp-finish h2 {
+  font-weight: 900;
+}
+
+.lp-brand h1 small,
+.lp-rhythm header h2 span,
+.lp-metric h2 span {
+  font-weight: 800;
+}
+
+.lp-ecg {
+  height: 210px;
+}
+
+.lp-ecg svg {
+  width: min(52%, 450px);
+  transform: scale(.82);
+}
+
+.lp-judgement > b {
+  font-weight: 950;
+  text-shadow: 0 3px 0 rgb(255 255 255 / 75%), 0 8px 24px rgb(22 184 120 / 18%);
+}
+
+.lp-judgement > strong,
+.lp-judgement > span {
+  font-weight: 950;
+}
+
+.lp-finish h2 {
+  font-weight: 950;
+}
+
+.lp-timer button {
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+  min-width: max-content;
+}
+
+.lp-ecg svg {
+  transform-origin: center;
+}
