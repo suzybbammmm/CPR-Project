@@ -1,22 +1,24 @@
 /* ── LifePulse Admin ───────────────────────────────────────────────────────── */
 .adm-login {
   min-height: 100dvh;
-  background: linear-gradient(160deg, #0d1b2e, #0a1628);
+  background:
+    radial-gradient(circle at 15% 10%, #dbeafe 0, transparent 34%),
+    linear-gradient(155deg, #f8fbff 0%, #edf5ff 54%, #f4f8fc 100%);
   display: grid;
   place-items: center;
   padding: 24px;
   font-family: inherit;
 }
 .adm-login-card {
-  background: #0f2040;
-  border: 1.5px solid #1e3a5f;
+  background: #ffffff;
+  border: 1.5px solid #d7e5f5;
   border-radius: 22px;
   padding: clamp(28px, 4vh, 48px) clamp(28px, 4vw, 48px);
   width: min(400px, 100%);
   display: flex;
   flex-direction: column;
   gap: 20px;
-  box-shadow: 0 20px 60px #00000060;
+  box-shadow: 0 24px 64px rgb(49 130 246 / 14%);
 }
 .adm-brand {
   display: flex;
@@ -24,7 +26,7 @@
   gap: 10px;
   font-size: clamp(16px, 1.4vw, 20px);
   font-weight: 850;
-  color: #c4d8f0;
+  color: #1c2d46;
   letter-spacing: -.4px;
 }
 .adm-brand svg { color: #51a1f8; }
@@ -32,8 +34,8 @@
 /* Root layout */
 .adm-root {
   min-height: 100dvh;
-  background: #0a1628;
-  color: #c4d8f0;
+  background: #f4f8fd;
+  color: #1c2d46;
   font-family: inherit;
   font-size: 16px;
   display: flex;
@@ -49,8 +51,9 @@
   justify-content: space-between;
   gap: 12px;
   padding: 14px clamp(16px, 3vw, 40px);
-  background: #0d1b2e;
-  border-bottom: 1px solid #1a3050;
+  background: rgb(255 255 255 / 94%);
+  border-bottom: 1px solid #dbe6f2;
+  box-shadow: 0 5px 18px rgb(30 64 175 / 5%);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -74,15 +77,15 @@
   transition: background .15s;
 }
 .adm-primary:hover:not(:disabled) { background: #2060c8; }
-.adm-primary:disabled { background: #1e3a5f; color: #3d5a80; cursor: not-allowed; }
+.adm-primary:disabled { background: #dbe7f4; color: #8799ae; cursor: not-allowed; }
 
 .adm-action {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #0f2040;
-  border: 1.5px solid #1e3a5f;
-  color: #7ba3d4;
+  background: #ffffff;
+  border: 1.5px solid #cbdced;
+  color: #355a85;
   border-radius: 10px;
   padding: 8px 14px;
   font-size: 15px;
@@ -91,114 +94,59 @@
   transition: background .15s;
   text-decoration: none;
 }
-.adm-action:hover { background: #1a3560; color: #a8c4e8; }
-.adm-action-warn { border-color: #3a1515; color: #e06060; }
-.adm-action-warn:hover { background: #2a1010; }
+.adm-action:hover { background: #edf5ff; color: #1d4f91; border-color: #9fc4ef; }
+.adm-action-warn { border-color: #f3c5c5; color: #c33b46; }
+.adm-action-warn:hover { background: #fff1f2; border-color: #eca5aa; }
 
 /* Form fields */
 .adm-field { display: flex; flex-direction: column; gap: 6px; }
-.adm-field label { font-size: 14px; font-weight: 700; color: #3d5a80; text-transform: uppercase; letter-spacing: .3px; }
+.adm-field label { font-size: 14px; font-weight: 700; color: #5d718c; text-transform: uppercase; letter-spacing: .3px; }
 .adm-field input {
-  background: #091525;
-  border: 2px solid #1e3a5f;
+  background: #f8fbff;
+  border: 2px solid #cbdced;
   border-radius: 10px;
   padding: 12px 14px;
   font-size: 16px;
-  color: #c4d8f0;
+  color: #1c2d46;
   font-family: inherit;
   outline: none;
   transition: border-color .15s;
 }
 .adm-field input:focus { border-color: #3182f6; }
+.adm-field input::placeholder,
+.adm-search input::placeholder { color: #94a4b7; }
 .adm-error {
-  background: #3a1515;
-  border: 1px solid #7a2020;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
   border-radius: 10px;
   padding: 10px 14px;
-  color: #f47;
+  color: #be2637;
   font-size: 15px;
   font-weight: 700;
-}
-
-/* Alert */
-.adm-alert {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #3a1a00;
-  border: 1px solid #7a3a00;
-  border-radius: 12px;
-  padding: 12px 16px;
-  color: #f8a040;
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 16px;
 }
 
 /* Sections */
 .adm-section {
   padding: clamp(16px, 2.4vh, 28px) clamp(16px, 3vw, 40px);
-  border-bottom: 1px solid #0f1e30;
+  border-bottom: 1px solid #e1eaf4;
 }
 .adm-section h2 {
   font-size: clamp(18px, 1.5vw, 23px);
   font-weight: 850;
-  color: #c4d8f0;
+  color: #1c2d46;
   letter-spacing: -.4px;
   margin-bottom: clamp(12px, 1.6vh, 20px);
 }
 
-/* Stats grid */
-.adm-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-}
-.adm-stat {
-  background: #0f2040;
-  border: 1.5px solid #1a3050;
-  border-radius: 14px;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.adm-stat span { font-size: 14px; color: #3d5a80; }
-.adm-stat strong { font-size: 24px; font-weight: 850; color: #c4d8f0; }
-.adm-icon-ok { color: #0caa87; }
-.adm-icon-warn { color: #f8a040; }
-
-/* Event form */
-.adm-event-form {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.adm-event-form input {
-  background: #091525;
-  border: 2px solid #1e3a5f;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 14px;
-  color: #c4d8f0;
-  font-family: inherit;
-  outline: none;
-  flex: 1;
-  min-width: 200px;
-  transition: border-color .15s;
-}
-.adm-event-form input:focus { border-color: #3182f6; }
-
 /* Search */
 .adm-search { margin-bottom: 14px; }
 .adm-search input {
-  background: #091525;
-  border: 2px solid #1e3a5f;
+  background: #ffffff;
+  border: 2px solid #cbdced;
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 14px;
-  color: #c4d8f0;
+  color: #1c2d46;
   font-family: inherit;
   outline: none;
   width: min(360px, 100%);
@@ -207,37 +155,27 @@
 .adm-search input:focus { border-color: #3182f6; }
 
 /* Table */
-.adm-table-wrapper { overflow-x: auto; border-radius: 14px; border: 1px solid #1a3050; }
+.adm-table-wrapper { overflow-x: auto; border-radius: 14px; border: 1px solid #d8e3ef; background: #fff; box-shadow: 0 8px 24px rgb(30 64 175 / 5%); }
 .adm-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 15px;
 }
-.adm-table thead tr { background: #0e2040; border-bottom: 1px solid #1a3050; }
+.adm-table thead tr { background: #eaf3ff; border-bottom: 1px solid #ccdced; }
 .adm-table th {
   padding: 12px 14px;
   text-align: left;
   font-size: 13px;
   font-weight: 750;
-  color: #3d5a80;
+  color: #4a6585;
   letter-spacing: .5px;
   text-transform: uppercase;
   white-space: nowrap;
 }
-.adm-table tbody tr { border-bottom: 1px solid #0f2038; transition: background .12s; }
+.adm-table tbody tr { border-bottom: 1px solid #e5edf5; transition: background .12s; }
 .adm-table tbody tr:last-child { border-bottom: none; }
-.adm-table tbody tr:hover { background: #0f2040; }
-.adm-table td { padding: 10px 14px; color: #7ba3d4; vertical-align: middle; }
-.adm-row-invalid td { opacity: .5; }
-.adm-badge-invalid {
-  background: #3a1515; color: #f47; border-radius: 6px;
-  padding: 2px 8px; font-size: 13px; font-weight: 750;
-}
-.adm-badge-valid {
-  background: #0e2a1e; color: #0caa87; border-radius: 6px;
-  padding: 2px 8px; font-size: 13px; font-weight: 750;
-}
-
+.adm-table tbody tr:hover { background: #f2f7fd; }
+.adm-table td { padding: 10px 14px; color: #405875; vertical-align: middle; }
 /* Pagination */
 .adm-pagination {
   display: flex;
@@ -246,12 +184,12 @@
   gap: 14px;
   padding: 16px;
   font-size: 15px;
-  color: #3d5a80;
+  color: #6e8199;
 }
 .adm-pagination button {
-  background: #0f2040;
-  border: 1.5px solid #1e3a5f;
-  color: #7ba3d4;
+  background: #ffffff;
+  border: 1.5px solid #cbdced;
+  color: #355a85;
   border-radius: 8px;
   padding: 6px 14px;
   cursor: pointer;
@@ -262,7 +200,13 @@
 .adm-footer {
   padding: 14px clamp(16px, 3vw, 40px);
   font-size: 13px;
-  color: #1e3a5f;
-  border-top: 1px solid #0f1e30;
+  color: #8495a9;
+  border-top: 1px solid #e1eaf4;
   margin-top: auto;
 }
+
+.adm-contact-note{font-size:14px;line-height:1.65;color:#60758f;margin:0 0 14px}
+.adm-table .adm-phone{white-space:nowrap;color:#245e9c;font-variant-numeric:tabular-nums;font-weight:700}
+.adm-table .adm-empty{text-align:center;padding:30px;color:#71849b}
+.adm-table th{color:#526b88}
+.adm-table{min-width:850px}.adm-table td{white-space:nowrap}

@@ -5,7 +5,7 @@ import type { SensorReading } from '../live/sensorState';
 import { getParticipantReading } from '../demo/scenario';
 import { buildLiveParticipantReading } from '../live/readings';
 import { getLiveCoachFeedback } from '../utils/cprCoach';
-import { createTeamSession, startTeamRound, nextTeamRound, finishTeamRound, recordTeamFrame, tickTeamSession, teamGameStats, buildCompressionPayload } from '../live/teamSession';
+import { TEAM_ROUND_SECONDS, createTeamSession, startTeamRound, nextTeamRound, finishTeamRound, recordTeamFrame, tickTeamSession, teamGameStats, buildCompressionPayload } from '../live/teamSession';
 import { useWebSocket } from './useWebSocket';
 import { useSaveAttempt } from './useSaveAttempt';
 import { createSession } from '../api/sessions';
@@ -56,7 +56,7 @@ export function useTeamSession(mode: RuntimeMode, initialVictim: VictimType, ini
      setSession(current=>recordTeamFrame(current,frame,Date.now(),socket.sensorOnline,receivedAt));
    }
  },[mode,socket.data,socket.lastReceivedAt,socket.sensorOnline]);
- const elapsedSeconds=session.phase==='active'?Math.min(120,Math.max(0,now-(session.startedAt??now))/1000):0;
+ const elapsedSeconds=session.phase==='active'?Math.min(TEAM_ROUND_SECONDS,Math.max(0,now-(session.startedAt??now))/1000):0;
  const connected=mode==='demo'||socket.sensorOnline;
  const data=mode==='demo'?demoFrame(elapsedSeconds*1000):socket.data;
  const game=teamGameStats(session.events,session.victimType);
@@ -76,7 +76,7 @@ export function useTeamSession(mode: RuntimeMode, initialVictim: VictimType, ini
    }
    return next;
  });
- return {session,reading,coach,connected,game,elapsedSeconds,remainingSeconds:Math.max(0,120-elapsedSeconds),
+ return {session,reading,coach,connected,game,elapsedSeconds,remainingSeconds:Math.max(0,TEAM_ROUND_SECONDS-elapsedSeconds),
   saveStatus:saveAttempt.status,
   configure,setParticipants,
   start:()=>setSession(current=>{const next=startTeamRound(current,Date.now(),baseline());setTimeout(()=>ensureServerSession(next),0);return next;}),

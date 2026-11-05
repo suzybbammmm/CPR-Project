@@ -95,7 +95,7 @@ function ParticipantRuntime({ mode, victimType, playerCount, started }: { mode: 
  const team=useTeamSession(mode,victimType,playerCount,started);
  return <TeamPracticeScreen mode={mode} victimType={team.session.victimType} playerCount={team.session.playerCount} phase={team.session.phase} currentPlayerIndex={team.session.currentPlayerIndex}
  elapsedSeconds={team.elapsedSeconds} remainingSeconds={team.remainingSeconds} connected={team.connected} reading={team.reading} coach={team.coach} game={team.game}
- history={team.session.history} results={team.session.results} participants={team.session.participants} saveStatus={team.saveStatus}
+ results={team.session.results} participants={team.session.participants} saveStatus={team.saveStatus}
  onConfigure={team.configure} onRegisterParticipants={team.setParticipants} onStart={team.start} onEndRound={team.endRound} onNextPlayer={team.nextPlayer} onChangeSettings={team.reset}/>;
 }
 

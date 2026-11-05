@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createTeamSession, startTeamRound, recordTeamFrame, finishTeamRound, nextTeamRound, teamGameStats, tickTeamSession } from './teamSession';
+import { TEAM_ROUND_MS, TEAM_ROUND_SECONDS, createTeamSession, startTeamRound, recordTeamFrame, finishTeamRound, nextTeamRound, teamGameStats, tickTeamSession } from './teamSession';
 import type { SensorReading } from './sensorState';
 const frame = (count = 10, overrides: Partial<SensorReading> = {}): SensorReading => ({ type: 'reading', deviceId: 'one', sequence: count, timestamp: count * 500, depth: 0, bpm: 110, compressionCount: count, compressionPeakCm: 5.5, compressionBpm: 110, recoilPercent: 98, accelZ: 0, gyroZ: 0, ...overrides });
 describe('team session rounds', () => {
@@ -7,11 +7,11 @@ describe('team session rounds', () => {
     let state = startTeamRound(createTeamSession(players, 'adult'), 1000, frame());
     for (let i = 0; i < players; i++) {
       const start = (state.startedAt??0);
-      state = finishTeamRound(state, start + 120000);
+      state = finishTeamRound(state, start + TEAM_ROUND_MS);
       expect(state.results).toHaveLength(i + 1);
-      expect(state.results[i].elapsedSeconds).toBe(120);
-      expect(finishTeamRound(state, start + 130000)).toBe(state);
-      if (i < players - 1) { expect(state.phase).toBe('handoff'); state = nextTeamRound(state, start + 130000, frame()); }
+      expect(state.results[i].elapsedSeconds).toBe(TEAM_ROUND_SECONDS);
+      expect(finishTeamRound(state, start + TEAM_ROUND_MS + 10000)).toBe(state);
+      if (i < players - 1) { expect(state.phase).toBe('handoff'); state = nextTeamRound(state, start + TEAM_ROUND_MS + 10000, frame()); }
     }
     expect(state.phase).toBe('results');
   });
@@ -50,7 +50,7 @@ describe('team session rounds', () => {
   });
   it('expires before accepting frames at or after deadline even when disconnected', () => {
     let state = startTeamRound(createTeamSession(1, 'adult'), 1000, frame());
-    state = recordTeamFrame(state, frame(11), 121000, true, 121000);
+    state = recordTeamFrame(state, frame(11), 31000, true, 31000);
     expect(state.phase).toBe('results');
     expect(state.results[0]).toMatchObject({ observedCount: 0, score: null, avgDepth: null });
   });
@@ -68,10 +68,10 @@ it('awards XP, resets combos and produces a normalized grade', () => {
  expect(stats).toMatchObject({xp:5,combo:0,maxCombo:2,score:63,grade:'C',scoredCount:4});
  expect(teamGameStats([], 'adult').score).toBeNull();
 });
-it('automatically freezes exactly once at the two-minute deadline', () => {
+it('automatically freezes exactly once at the 30-second deadline', () => {
  let state=startTeamRound(createTeamSession(2,'adult'),1000,frame());
- expect(tickTeamSession(state,120999).phase).toBe('active');
- state=tickTeamSession(state,121000);
+ expect(tickTeamSession(state,30999).phase).toBe('active');
+ state=tickTeamSession(state,31000);
  expect(state.phase).toBe('handoff');
  expect(tickTeamSession(state,200000).results).toHaveLength(1);
 });

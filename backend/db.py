@@ -506,9 +506,10 @@ async def get_admin_attempts(
     params: list[Any] = []
 
     if search:
-        conditions.append("(p.student_number LIKE ? OR p.name LIKE ?)")
+        conditions.append("(p.student_number LIKE ? OR p.name LIKE ? OR REPLACE(REPLACE(COALESCE(p.phone, ''), '-', ''), ' ', '') LIKE ?)")
         pattern = f"%{search}%"
-        params += [pattern, pattern]
+        phone_search = search.replace("-", "").replace(" ", "") or search
+        params += [pattern, pattern, f"%{phone_search}%"]
     if victim_type_filter:
         conditions.append("a.victim_type = ?")
         params.append(victim_type_filter)
@@ -534,7 +535,7 @@ async def get_admin_attempts(
         a.depth_good_percent, a.rate_good_percent,
         a.elapsed_seconds, a.completed_at,
         a.invalidated_at, a.invalidated_reason,
-        p.student_number, p.name
+        p.student_number, p.name, p.phone
     FROM attempts a
     LEFT JOIN participants p ON p.id = a.participant_id
     {where}

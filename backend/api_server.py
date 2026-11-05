@@ -104,7 +104,15 @@ async def cors_middleware(request: web.Request, handler):
 @web.middleware
 async def admin_auth_middleware(request: web.Request, handler):
     path = request.path
-    if not path.startswith("/api/v1/admin") or path == "/api/v1/admin/login":
+    public_participant_reads = {
+        "/api/v1/admin/attempts",
+        "/api/v1/admin/export.csv",
+    }
+    if (
+        not path.startswith("/api/v1/admin")
+        or path == "/api/v1/admin/login"
+        or (request.method == "GET" and path in public_participant_reads)
+    ):
         return await handler(request)
 
     session_id = request.cookies.get(_COOKIE_NAME)
@@ -537,6 +545,20 @@ async def admin_finalize_event(request: web.Request) -> web.Response:
 # ── Admin: export / backup ────────────────────────────────────────────────────
 
 
+def _csv_text(value) -> str:
+    text = str(value or "")
+    return "'" + text if text.lstrip().startswith(("=", "+", "-", "@")) or text.startswith(("\t", "\r", "\n")) else text
+
+
+def _csv_phone(value) -> str:
+    phone = str(value or "")
+    digits = re.sub(r"[-\s]", "", phone)
+    # Hyphens preserve the leading zero when the CSV is opened in Excel.
+    if re.fullmatch(r"01[0-9]\d{7,8}", digits):
+        return f"{digits[:3]}-{digits[3:-4]}-{digits[-4:]}"
+    return _csv_text(phone)
+
+
 async def admin_export_csv(request: web.Request) -> web.Response:
     import csv
     import io
@@ -549,7 +571,7 @@ async def admin_export_csv(request: web.Request) -> web.Response:
     writer = csv.writer(output)
     writer.writerow(
         [
-            "attempt_id", "attempt_uuid", "student_number", "name",
+            "attempt_id", "attempt_uuid", "student_number", "name", "phone",
             "victim_type", "score", "grade", "xp", "max_combo",
             "compression_count", "average_depth", "average_bpm", "average_recoil",
             "depth_good_percent", "rate_good_percent",
@@ -561,7 +583,8 @@ async def admin_export_csv(request: web.Request) -> web.Response:
         writer.writerow(
             [
                 row["id"], row["attempt_uuid"],
-                row.get("student_number", ""), row.get("name", ""),
+                _csv_text(row.get("student_number", "")), _csv_text(row.get("name", "")),
+                _csv_phone(row.get("phone")),
                 row.get("victim_type", "adult"),
                 row["score"], row["grade"], row["xp"], row["max_combo"],
                 row["compression_count"],
@@ -574,8 +597,9 @@ async def admin_export_csv(request: web.Request) -> web.Response:
         )
 
     return web.Response(
-        text=output.getvalue(),
-        content_type="text/csv; charset=utf-8",
+        text="\ufeff" + output.getvalue(),
+        content_type="text/csv",
+        charset="utf-8",
         headers={"Content-Disposition": 'attachment; filename="lifepulse_attempts.csv"'},
     )
 

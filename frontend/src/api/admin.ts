@@ -64,6 +64,7 @@ export interface AdminAttempt {
   invalidatedReason: string | null;
   studentNumber: string;
   name: string;
+  phone: string | null;
 }
 
 export async function getAdminAttempts(options?: {
@@ -111,6 +112,7 @@ export async function getAdminAttempts(options?: {
       invalidatedReason: r.invalidated_reason as string | null,
       studentNumber: (r.student_number as string) ?? '',
       name: (r.name as string) ?? '',
+      phone: (r.phone as string | null) ?? null,
     })),
     total: raw.total,
     page: raw.page,

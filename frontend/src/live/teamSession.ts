@@ -1,11 +1,13 @@
 import type { ParticipantChartPoint } from '../pages/ParticipantSessionScreen';
 import { CPR_PROFILES, type VictimType } from '../utils/cprGuidance';
 import { calculatePoints } from '../utils/scoring';
+import { practiceBonus } from '../utils/practiceGame';
 import { calculateGrade } from '../utils/grading';
 import type { SensorReading } from './sensorState';
 import type { ParticipantInfo } from '../types/exhibition.types';
 
-export const TEAM_ROUND_MS = 120_000;
+export const TEAM_ROUND_SECONDS = 30;
+export const TEAM_ROUND_MS = TEAM_ROUND_SECONDS * 1000;
 export type TeamPhase = 'setup' | 'active' | 'handoff' | 'results';
 export interface TeamEvent { depth: number; bpm: number | null; recoil: number | null; points?: number; combo?: number }
 export interface TeamRoundResult {
@@ -17,7 +19,7 @@ export interface TeamRoundResult {
   observedCount: number;
   missingCount: number;
   score: number | null;
-  xp?: number; maxCombo?: number; grade?: string | null;
+  gamePoints?: number; xp?: number; maxCombo?: number; grade?: string | null;
   avgDepth: number | null;
   avgBpm: number | null;
   avgRecoil: number | null;
@@ -88,7 +90,7 @@ export function recordTeamFrame(state: TeamSession, frame: SensorReading, now: n
   // device or clock establishes a fresh baseline instead of producing a count gap.
   const restarted = !previous || frame.deviceId !== previous.deviceId || frame.compressionCount < previous.compressionCount || frame.timestamp < previous.timestamp;
   if (previous && !restarted && frame.sequence > 0 && previous.sequence > 0 && frame.sequence <= previous.sequence) return current;
-  const history = [...current.history, { time: Math.min(120, (receivedAt - current.startedAt) / 1000), depth: frame.depth, bpm: frame.bpm }];
+  const history = [...current.history, { time: Math.min(TEAM_ROUND_SECONDS, (receivedAt - current.startedAt) / 1000), depth: frame.depth, bpm: frame.bpm }];
   const next = { ...current, history, previousFrame: frame, lastReceivedAt: receivedAt };
   if (restarted || !current.armed) return { ...next, armed: frame.depth <= 0.5 };
   const difference = frame.compressionCount - (previous?.compressionCount??frame.compressionCount);
@@ -108,7 +110,7 @@ export function teamGameStats(events: TeamEvent[], victimType: VictimType) {
    xp+=result.points;combo=result.newCombo;maxCombo=Math.max(maxCombo,combo);scoredCount++;
  }
  const score=scoredCount ? Math.round(100*xp/(2*scoredCount)) : null;
- return {xp,combo,maxCombo,scoredCount,score,grade:score===null?null:calculateGrade(score)};
+ return {...practiceBonus(events,victimType),xp,combo,maxCombo,scoredCount,score,grade:score===null?null:calculateGrade(score)};
 }
 
 /** Build compression_events array ready to POST to /api/v1/attempts */
